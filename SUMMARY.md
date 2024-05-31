@@ -15,4 +15,4 @@
 * [操作系统](cao-zuo-xi-tong/README.md)
   * [linux](cao-zuo-xi-tong/linux/README.md)
     * [cpu](cao-zuo-xi-tong/linux/cpu/README.md)
-      * [cpu](操作系统/linux/cpu/cpu.md)
+      * [cpu](操作系统/linux/cpu/cpu总结.md)

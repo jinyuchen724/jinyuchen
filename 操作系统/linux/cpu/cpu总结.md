@@ -1,5 +1,3 @@
-[TOC]
-
 # cpu性能
 
 ## 一、cpu啥时候才叫有瓶颈
@@ -16,57 +14,60 @@
 
 从下面这个命令可以分析cpu自身硬件条件怎么样：
 
-    #lscpu
-    Architecture:          x86_64
-    CPU op-mode(s):        32-bit, 64-bit
-    Byte Order:            Little Endian
-    CPU(s):                96
-    On-line CPU(s) list:   0-95
-    Thread(s) per core:    2
-    Core(s) per socket:    24
-    Socket(s):             2
-    NUMA node(s):          1
-    Vendor ID:             GenuineIntel
-    CPU family:            6
-    Model:                 85
-    Model name:            Intel(R) Xeon(R) Gold 5220R CPU @ 2.20GHz
-    Stepping:              7
-    CPU MHz:               2900.113
-    CPU max MHz:           4000.0000
-    CPU min MHz:           1000.0000
-    BogoMIPS:              4400.00
-    Virtualization:        VT-x
-    L1d cache:             32K
-    L1i cache:             32K
-    L2 cache:              1024K
-    L3 cache:              36608K
-    NUMA node0 CPU(s):     0-95
-    Flags:                 fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single intel_ppin ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow vnmi flexpriority ept vpid fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts hwp hwp_act_window hwp_epp hwp_pkg_req pku ospke avx512_vnni flush_l1d arch_capabilities
+```
+#lscpu
+Architecture:          x86_64
+CPU op-mode(s):        32-bit, 64-bit
+Byte Order:            Little Endian
+CPU(s):                96
+On-line CPU(s) list:   0-95
+Thread(s) per core:    2
+Core(s) per socket:    24
+Socket(s):             2
+NUMA node(s):          1
+Vendor ID:             GenuineIntel
+CPU family:            6
+Model:                 85
+Model name:            Intel(R) Xeon(R) Gold 5220R CPU @ 2.20GHz
+Stepping:              7
+CPU MHz:               2900.113
+CPU max MHz:           4000.0000
+CPU min MHz:           1000.0000
+BogoMIPS:              4400.00
+Virtualization:        VT-x
+L1d cache:             32K
+L1i cache:             32K
+L2 cache:              1024K
+L3 cache:              36608K
+NUMA node0 CPU(s):     0-95
+Flags:                 fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single intel_ppin ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow vnmi flexpriority ept vpid fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts hwp hwp_act_window hwp_epp hwp_pkg_req pku ospke avx512_vnni flush_l1d arch_capabilities
+```
 
 核心需要关注的:
 
-    1.cpu的主频，这个机器主频是2.20GHz，主频越高cpu计算的越快
-    Model name:            Intel(R) Xeon(R) Gold 5220R CPU @ 2.20GHz
+```
+1.cpu的主频，这个机器主频是2.20GHz，主频越高cpu计算的越快
+Model name:            Intel(R) Xeon(R) Gold 5220R CPU @ 2.20GHz
 
-    2.cpu核心
-    CPU(s):                96
-    On-line CPU(s) list:   0-95 (2*24*2=96)
-    Thread(s) per core:    2  (机器支持超线程技术的话,每个核心可以虚拟出来2个线程)
-    Core(s) per socket:    24 (cpu核心数)
-    Socket(s):             2 (代表物理机cpu个数)
+2.cpu核心
+CPU(s):                96
+On-line CPU(s) list:   0-95 (2*24*2=96)
+Thread(s) per core:    2  (机器支持超线程技术的话,每个核心可以虚拟出来2个线程)
+Core(s) per socket:    24 (cpu核心数)
+Socket(s):             2 (代表物理机cpu个数)
 
-    3.经常忽略的一点就是cpu的缓存，这个对于cpu性能也很重要(见amd/intel cpu架构分析)
-    L1d cache:             32K
-    L1i cache:             32K
-    L2 cache:              1024K
-    L3 cache:              36608K
+3.经常忽略的一点就是cpu的缓存，这个对于cpu性能也很重要(见amd/intel cpu架构分析)
+L1d cache:             32K
+L1i cache:             32K
+L2 cache:              1024K
+L3 cache:              36608K
 
-    cpu的3级缓存,L1速度最快依次类推，这个越大缓存的数据越多,速度自然会快。
+cpu的3级缓存,L1速度最快依次类推，这个越大缓存的数据越多,速度自然会快。
+```
 
-![image](./images/cpu1.png)
+![](./images/cpu1.png)
 
-
-ntel cpu架构简图：
+intel cpu架构简图：
 
 在 CPU Cache 的概念刚出现时，CPU 和内存之间只有一个缓存，随着芯片集成密度的提高，现代的 CPU Cache 已经普遍采用 L1/L2/L3 多级缓存的结构来改善性能。自顶向下容量逐渐增大，访问速度也逐渐降低。当缓存未命中时，缓存系统会向更底层的层次搜索。
 
@@ -74,11 +75,11 @@ ntel cpu架构简图：
 *   **L2 Cache：** 在 CPU 核心内部，尺寸比 L1 更大；
 *   **L3 Cache：** 在 CPU 核心外部，所有 CPU 核心共享同一个 L3 缓存。
 
-![image](./images/cpu2.png)
+![](./images/cpu2.png)
 
 [cpu](https://frankdenneman.nl/2019/10/14/amd-epyc-naples-vs-rome-and-vsphere-cpu-scheduler-updates/)的访问速度：
 
-![image](./images/cpu3.1.png)
+![](./images/cpu3.1.png)
 
 通过上面的分析可以看出来，想让cpu速度越快，就要让他尽量在一个L3内进行数据/指令计算，否则延迟会变得很高。上述这些基本已经可以确认cpu物理上的性能上限了。
 
@@ -92,7 +93,6 @@ yum install hwloc-libs hwloc-gui
 ```
 hwloc-ls
 ```
-        
 
 *   查看硬件内存分布
 ```
@@ -106,11 +106,11 @@ lstopo --of png > server.png
 
 > intel的cpu, 可以发现intel一个物理CPU共享一个L3
 
-![image](./images/intel cpu.png)
+![intel-cpu](./images/intelcpu.png)
 
 > AMD的cpu，可以发现amd一个物理CPU有多个L3
 
-![image](./images/amd cpu.png)
+![amd-cpu](./images/amdcpu.png)
 
 之前分析过跨L3越多，延迟越高，所以针对AMD架构，需要尽量让cpu少切换，尽量让他在一个L3单元完成计算。详细可以参考这个[文章](https://cloud.tencent.com/developer/article/1580471)的分析。
 
@@ -123,36 +123,36 @@ CPU动态节能技术用于降低服务器功耗，通过选择系统空闲状�
 
 ```
 几种模式如下：
-    performance: 顾名思义只注重效率，将CPU频率固定工作在其支持的最高运行频率上，而不动态调节。
-    userspace:最早的cpufreq子系统通过userspace governor为用户提供了这种灵活性。系统将变频策略的决策权交给了用户态应用程序，并提供了相应的接口供用户态应用程序调节CPU 运行频率使用。也就是长期以来都在用的那个模式。可以通过手动编辑配置文件进行配置
-    powersave: 将CPU频率设置为最低的所谓“省电”模式，CPU会固定工作在其支持的最低运行频率上。因此这两种governors 都属于静态governor，即在使用它们时CPU 的运行频率不会根据系统运行时负载的变化动态作出调整。这两种governors 对应的是两种极端的应用场景，使用performance governor 是对系统高性能的最大追求，而使用powersave governor 则是对系统低功耗的最大追求。
-    ondemand: 按需快速动态调整CPU频率， 一有cpu计算量的任务，就会立即达到最大频率运行，等执行完毕就立即回到最低频率；ondemand：userspace是内核态的检测，用户态调整，效率低。而ondemand正是人们长期以来希望看到的一个完全在内核态下工作并且能够以更加细粒度的时间间隔对系统负载情况进行采样分析的governor。 在 ondemand governor 监测到系统负载超过 up_threshold 所设定的百分比时，说明用户当前需要 CPU 提供更强大的处理能力，因此 ondemand governor 会将CPU设置在最高频率上运行。但是当 ondemand governor 监测到系统负载下降，可以降低 CPU 的运行频率时，到底应该降低到哪个频率呢？ ondemand governor 的最初实现是在可选的频率范围内调低至下一个可用频率，例如 CPU 支持三个可选频率，分别为 1.67GHz、1.33GHz 和 1GHz ，如果 CPU 运行在 1.67GHz 时 ondemand governor 发现可以降低运行频率，那么 1.33GHz 将被选作降频的目标频率。
-    conservative: 与ondemand不同，平滑地调整CPU频率，频率的升降是渐变式的,会自动在频率上下限调整，和ondemand的区别在于它会按需分配频率，而不是一味追求最高频率；
+performance: 顾名思义只注重效率，将CPU频率固定工作在其支持的最高运行频率上，而不动态调节。
+userspace:最早的cpufreq子系统通过userspace governor为用户提供了这种灵活性。系统将变频策略的决策权交给了用户态应用程序，并提供了相应的接口供用户态应用程序调节CPU 运行频率使用。也就是长期以来都在用的那个模式。可以通过手动编辑配置文件进行配置
+powersave: 将CPU频率设置为最低的所谓“省电”模式，CPU会固定工作在其支持的最低运行频率上。因此这两种governors 都属于静态governor，即在使用它们时CPU 的运行频率不会根据系统运行时负载的变化动态作出调整。这两种governors 对应的是两种极端的应用场景，使用performance governor 是对系统高性能的最大追求，而使用powersave governor 则是对系统低功耗的最大追求。
+ondemand: 按需快速动态调整CPU频率， 一有cpu计算量的任务，就会立即达到最大频率运行，等执行完毕就立即回到最低频率；ondemand：userspace是内核态的检测，用户态调整，效率低。而ondemand正是人们长期以来希望看到的一个完全在内核态下工作并且能够以更加细粒度的时间间隔对系统负载情况进行采样分析的governor。 在 ondemand governor 监测到系统负载超过 up_threshold 所设定的百分比时，说明用户当前需要 CPU 提供更强大的处理能力，因此 ondemand governor 会将CPU设置在最高频率上运行。但是当 ondemand governor 监测到系统负载下降，可以降低 CPU 的运行频率时，到底应该降低到哪个频率呢？ ondemand governor 的最初实现是在可选的频率范围内调低至下一个可用频率，例如 CPU 支持三个可选频率，分别为 1.67GHz、1.33GHz 和 1GHz ，如果 CPU 运行在 1.67GHz 时 ondemand governor 发现可以降低运行频率，那么 1.33GHz 将被选作降频的目标频率。
+conservative: 与ondemand不同，平滑地调整CPU频率，频率的升降是渐变式的,会自动在频率上下限调整，和ondemand的区别在于它会按需分配频率，而不是一味追求最高频率；
 
-    #cat /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor (查看cpu使用模式)
-    performance
+#cat /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor (查看cpu使用模式)
+performance
 
-    #cpupower frequency-info
-    analyzing CPU 0:
-      driver: intel_pstate
-      CPUs which run at the same hardware frequency: 0
-      CPUs which need to have their frequency coordinated by software: 0
-      maximum transition latency:  Cannot determine or is not supported.
-      hardware limits: 1000 MHz - 4.00 GHz
-      available cpufreq governors: performance powersave
-      current policy: frequency should be within 1000 MHz and 4.00 GHz.
-                      The governor "performance" may decide which speed to use
-                      within this range.
-      current CPU frequency: Unable to call hardware
-      current CPU frequency: 2.90 GHz (asserted by call to kernel)  (2.2GHz--超频--->2.9GHz)
-      boost state support:
-        Supported: yes
-        Active: yes
+#cpupower frequency-info
+analyzing CPU 0:
+  driver: intel_pstate
+  CPUs which run at the same hardware frequency: 0
+  CPUs which need to have their frequency coordinated by software: 0
+  maximum transition latency:  Cannot determine or is not supported.
+  hardware limits: 1000 MHz - 4.00 GHz
+  available cpufreq governors: performance powersave
+  current policy: frequency should be within 1000 MHz and 4.00 GHz.
+                  The governor "performance" may decide which speed to use
+                  within this range.
+  current CPU frequency: Unable to call hardware
+  current CPU frequency: 2.90 GHz (asserted by call to kernel)  (2.2GHz--超频--->2.9GHz)
+  boost state support:
+    Supported: yes
+    Active: yes
 ```
 
 > 另外根据硬件同bios也需要设置，bios也设置完成后会自动开始超频：
 
-![image](./images/cpu3.png)
+![](./images/cpu3.png)
 
 ### 3.2 常用命令指标及分析
 
@@ -160,7 +160,7 @@ CPU动态节能技术用于降低服务器功耗，通过选择系统空闲状�
 
 cpu性能优化的一个脑图：
 
-![image](./images/cpu4.png)
+![](./images/cpu4.png)
 
 #### 3.2.1 负载
 
@@ -234,7 +234,7 @@ guest_nice（通常缩写为 gnice），代表以低优先级运行虚拟机的�
 
 > 1.内存不足触发直接回收
 
-![image](./images/cpu5.png)
+![](./images/cpu5.png)
 
 > 2.文件句柄不足、应用死循环申请
 
@@ -242,9 +242,11 @@ guest_nice（通常缩写为 gnice），代表以低优先级运行虚拟机的�
 
 这个指标高了，一般代表系统io打满了，io速度很慢cpu都去等io了，这个非常耗性能，如下图就是读磁盘数据量太大导致。
 
-![image](./images/cpu6.png)
-![image](./images/cpu7.png)
-![image](./images/cpu8.png)
+![](./images/cpu6.png)
+
+![](./images/cpu7.png)
+
+![](./images/cpu8.png)
 
 - irq&softirq
 
@@ -326,7 +328,7 @@ CPU 寄存器，是 CPU 内置的容量小、但速度极快的内存。而程�
 
 Linux 按照特权等级，把进程的运行空间分为内核空间和用户空间，分别对应着下图中， CPU 特权等级的 Ring 0 和 Ring 3。
 
-![image](./images/cpu9.png)
+![](./images/cpu9.png)
 
 *   内核空间（Ring 0）具有最高权限，可以直接访问所有资源；
 *   用户空间（Ring 3）只能访问受限资源，不能直接访问内存等硬件设备，必须通过系统调用陷入到内核中，才能访问这些特权资源。
@@ -348,7 +350,7 @@ Linux 按照特权等级，把进程的运行空间分为内核空间和用户�
 
 进而大大缩短了真正运行进程的时间。这也是导致平均负载升高的一个重要因素。
 
-![image](./images/cpu10.png)
+![](./images/cpu10.png)
 
 **进程上下文切换的时机：**
 
@@ -418,13 +420,13 @@ procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
 
 1.尽量在一个L3里进行任务的处理，跨L3越多，延迟越高
 
-![image](./images/cpu11.png)
+![](./images/cpu11.png)
 
 2.cpu总需要和内存交互，尽量让cpu使用离自己最近的本地内存，
 
-![image](./images/cpu12.png)
+![](./images/cpu12.png)
 
-![image](./images/cpu13.png)
+![](./images/cpu13.png)
 
 ```
 perf record -e L1-dcache-load-misses -a ls
@@ -490,26 +492,28 @@ KiB Swap:        0 total,        0 free,        0 used. 29951840+avail Mem
 *   僵尸进程表示进程已经退出，但它的父进程还没有回收子进程占用的资源。短暂的僵尸状态我们通常不必理会，但进程长时间处于僵尸状态，就应该注意了，可能有应用程序没有正常处理子进程的退出。
     僵尸进程这个比较难处理，一般情况内核都会回收，但一些异常情况，导致内核无法回收，就会产生僵尸进程。比如之前遇到的yarn节点由于内存问题。导致大量Z的进程，不但没回收，还占用系统资源
 
-> 比如这个场景，某个节点iowait一直非常高：
-![image](./images/cpu15.png)
+> 比如这个场景，某个节点iowait一直非常高
+
+![](./images/cpu15.png)
 
 > 节点当时很多僵尸进程：
-> 
-> ![image](./images/cpu16.png)
+
+![](./images/cpu16.png)
 
 > 分析内核日志发现大量进程都有这个报错，和僵尸进程产生的时间基本对得上
-![image](./images/cpu17.png)
+
+![](./images/cpu17.png)
 
 这种就是由于内存在刷盘的时候，同时有大量io同步的动作，导致进程无法正常去做io的动作导致被block住。在这种负载异常情况下，内核无法回收的进程就变成了僵尸进程。
 > 进程优先级：这个作用就是在资源分配的时候优先级高的进程能先拿到资源
 
 主要是弄清楚2个指标一个是nice值一个是pri值，pri代表优先级，nice值不是优先级，但是会影响pri，简单来说就是可以通过nice去修改进程的pri。比如：
 
-![image](./images/cpu18.png)
+![](./images/cpu18.png)
 
 在top中"ssh"这个服务PR值是20，NI值是0
 
-![image](./images/cpu19.png)
+![](./images/cpu19.png)
 
 在ps中"ssh"这个服务的PRI是80,NI值是0
 
@@ -579,7 +583,7 @@ define NICE_TO_PRIO(nice)	((nice) + DEFAULT_PRIO)
 
 实时进程(比如内核的watchdog)>pri值低的>pri值高的
 
-![image](./images/cpu20.png)
+![](./images/cpu20.png)
 
 nice值的范围是-20～20，对应的pri就是100-139。
 ```
@@ -598,11 +602,11 @@ nice值的范围是-20～20，对应的pri就是100-139。
 
 网上别人梳理的一个性能分析工具，整理的不错：
 
-![image](./images/cpu21.webp)
+![](./images/cpu21.webp)
 
-![image](./images/cpu22.webp)
+![](./images/cpu22.webp)
 
-![image](./images/cpu23.webp)
+![](./images/cpu23.webp)
 
 ## 四、cpu性能优化总结
 
