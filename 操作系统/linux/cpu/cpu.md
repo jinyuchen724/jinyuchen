@@ -63,7 +63,8 @@
 
     cpu的3级缓存,L1速度最快依次类推，这个越大缓存的数据越多,速度自然会快。
 
-![image](https://github.com/jinyuchen724/操作系统/linux/cpu/raw/master/images/cpu1.png)
+![image](./images/cpu1.png)
+
 
 ntel cpu架构简图：
 
