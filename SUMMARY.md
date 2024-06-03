@@ -17,3 +17,6 @@
     * memory
       * 问题排查
         * [容器中的业务频繁fullgc](操作系统/linux/memory/问题排查/容器中的业务频繁fullgc.md)
+    * namespace
+      * [namespace概览](操作系统/linux/namespace/namespace.md)
+      * [挂载隔离-mnt namespace](操作系统/linux/namespace/mnt namespace.md)

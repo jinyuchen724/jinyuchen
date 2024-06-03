@@ -56,12 +56,12 @@ jmap -dump:format=b,file=njorddump 4661
 
 通过jprofiler打开dump：es创建的netty线程是64个，每个大小是16M，16*64=1G，这个就是一直fullgc的罪魁祸首
 
-![image](../images/memory1.png)
+![docker中进程内存](../images/memory1.png)
 
 
 在dump kvm中的应用内存，进行分析，es创建的netty线程是16个，每个大小是16M，16*16=256M
 
-![image](../images/memory2.png)
+![kvm中进程内存](../images/memory2.png)
 
 对比docker和kvm的dump，docker中的线程内存大小是正常的，不正常的是数量，同样是分配8c16g的kvm和docker，为啥docker是64个，而kvm是16？
 这个数字太有规律:
@@ -70,7 +70,7 @@ jmap -dump:format=b,file=njorddump 4661
 
 [netty默认创建线程的方法](https://www.jianshu.com/p/512e983eedf5)：Runtime.getRuntime().availableProcessors()这个方法默认拿到的是物理机的核数。
 
-![image](../images/memory3.png)
+![netty创建线程方法](../images/memory3.png)
 
 至此问题已经比较明朗了，就是因为es调用的netty库所设置的线程过大，导致内存被占满。
 
