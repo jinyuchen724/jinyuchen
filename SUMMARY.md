@@ -13,4 +13,7 @@
     * cpu
       * [cpu总结](操作系统/linux/cpu/cpu总结.md)
       * 问题排查
-        * [容器中的业务cpu使用比kvm要高](操作系统/linux/cpu/问题排查/容器中的业务cpu使用比kvm要高.md)
+        * [容器中的业务cpu抖动](操作系统/linux/cpu/问题排查/容器中的业务cpu抖动.md)
+    * memory
+      * 问题排查
+        * [容器中的业务频繁fullgc](操作系统/linux/memory/问题排查/容器中的业务频繁fullgc.md)
