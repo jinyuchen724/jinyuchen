@@ -155,7 +155,9 @@ bash(1)───pstree(24)
 > pid namespace信号量
 
 pid=1的进程是每一个pid namespace的核心进程(init进程)，它不仅负责收养其所在pid namespace中的孤儿进程，还影响整个pid namespace。
+
 当pid namespace中pid=1的进程退出或终止，内核默认会发送SIGKILL信号给该pid namespace中的所有进程以便杀掉它们(如果该pid namespace中有子孙namespace，也会直接被杀)。
+
 在创建pid namespace时可以通过–kill-child选项指定pid=1的进程终止后内核要发送给pid namespace中进程的信号，其默认信号便是SIGKILL。
 
 ```shell

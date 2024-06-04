@@ -2,7 +2,9 @@
 
 network namespace用来隔离网络环境，在network namespace中，网络设备、端口、套接字、网络协议栈、路由表、防火墙规则等都是独立的。
 因为network namespace中具有独立的网络协议栈，因此每个network namespace中都有一个lo接口，但lo接口默认未启动，需要手动启动起来。
+
 让某个network namespace和root network namespace或其他network namespace之间保持通信是一个非常常见的需求， 这一般通过veth虚拟设备实现。
+
 veth类型的虚拟设备由一对虚拟的eth网卡设备组成，像管道一样，一端写入的数据总会从另一端流出， 从一端读取的数据一定来自另一端。
 用户可以将veth的其中一端放在某个network namespace中，另一端保留在root network namespace中。 这样就可以让用户创建的network namespace和宿主机通信。
 
