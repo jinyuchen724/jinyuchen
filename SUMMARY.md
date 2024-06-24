@@ -22,3 +22,10 @@
       * [cgroup-memory](操作系统/linux/cgroup/cgroup-memory.md)
     * rootfs
       * [rootfs](操作系统/linux/cgroup/rootfs.md)
+* [云原生]()
+  * Docker
+  * Kubernetes
+  * 在离线混部
+* [大数据]()
+* [开发]()
+* [DevOps]()

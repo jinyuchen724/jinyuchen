@@ -67,6 +67,7 @@ Jul 01 00:45:30 prod-k8s-node kubelet[12227]: I0701 00:45:30.827755   12227 kube
 ![](../images/memory7.png)
 
 kubelet后来发现这个pod还是没创建成功，一直在重试，但是每次检查的时候发现pod sandboxstatus不是ready状态然后一直重试，直到pod被删掉。
+
 ![](../images/memory8.png)
 
 ![](../images/memory9.png)
