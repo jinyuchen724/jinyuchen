@@ -9,6 +9,9 @@
       * 问题排查
         * [容器中的业务频繁fullgc](操作系统/linux/memory/问题排查/容器中的业务频繁fullgc.md)
         * [容器启动状态卡在ContainerCreating](操作系统/linux/memory/问题排查/容器启动状态卡在ContainerCreating.md)
+      * [memory总结](操作系统/linux/memory/memory总结.md)
+      * 内存分析工具
+      * 内存管理原理实现
     * namespace
       * [namespace概览](操作系统/linux/namespace/namespace.md)
       * [mnt-namespace](操作系统/linux/namespace/mnt-namespace.md)
