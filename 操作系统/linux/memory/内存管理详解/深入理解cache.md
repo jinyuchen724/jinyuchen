@@ -456,6 +456,69 @@ interval will be written out next time a flusher thread wakes up.
 那上面提到的tmpfs,共享内存,mmap如何回收呢？答案是无法回收，只能自行销毁释放。
 
 ### 2.2.1 tmpfs
+大家知道Linux提供一种“临时”文件系统叫做tmpfs，它可以将内存的一部分空间拿来当做文件系统使用，使内存空间可以当做目录文件来用。
+现在绝大多数Linux系统都有一个叫做/dev/shm的tmpfs目录，就是这样一种存在。
+当然，我们也可以手工创建一个自己的tmpfs，方法如下：
+
+```shell
+root@new-ubuntu-server:~# mkdir /tmp/tmpfs
+root@new-ubuntu-server:~# mount -t tmpfs -o size=10G none /tmp/tmpfs/
+root@new-ubuntu-server:~# df -h
+Filesystem      Size  Used Avail Use% Mounted on
+tmpfs            13G  1.7M   13G   1% /run
+/dev/sda2        98G  2.9G   90G   4% /
+tmpfs            63G     0   63G   0% /dev/shm
+tmpfs           5.0M     0  5.0M   0% /run/lock
+/dev/sda1       197M  6.1M  191M   4% /boot/efi
+/dev/sda3       1.4T  9.8G  1.4T   1% /data
+tmpfs            13G     0   13G   0% /run/user/0
+none             10G     0   10G   0% /tmp/tmpfs
+```
+
+于是我们就创建了一个新的tmpfs，空间10G，我们可以在/tmp/tmpfs中创建一个10G以内的文件。
+如果我们创建的文件实际占用的空间是内存的话，那么这些数据应该占用内存空间的什么部分呢？
+根据pagecache的实现功能可以理解，既然是某种文件系统，那么自然该使用pagecache的空间来管理。
+我们试试是不是这样？
+
+```shell
+root@new-ubuntu-server:~# free -g
+total        used        free      shared  buff/cache   available
+Mem:             125           0         124           0           0         124
+Swap:              0           0           0
+root@new-ubuntu-server:~# dd if=/dev/zero of=/tmp/tmpfs/testfile bs=1G count=5
+5+0 records in
+5+0 records out
+5368709120 bytes (5.4 GB, 5.0 GiB) copied, 4.25927 s, 1.3 GB/s
+root@new-ubuntu-server:~# free -g
+total        used        free      shared  buff/cache   available
+Mem:             125           0         119           5           5         119
+Swap:              0           0           0
+```
+我们在tmpfs目录下创建了一个5G的文件，并通过前后free命令的对比发现，
+cached增长了5G，说明这个文件确实放在了内存里并且内核使用的是cache作为存储。
+
+
+我们可以人工触发内存回收看看现在到底能回收多少内存：
+```shell
+root@new-ubuntu-server:~# echo 3 > /proc/sys/vm/drop_caches
+root@new-ubuntu-server:~# free -g
+total        used        free      shared  buff/cache   available
+Mem:             125           0         120           5           5         119
+Swap:              0           0           0
+```
+
+可以看到，cached占用的空间并没有像我们想象的那样完全被释放，
+其中5G的空间仍然被/tmp/tmpfs中的文件占用的。
+那么tmpfs占用的cache空间什么时候会被释放呢？
+是在其文件被删除的时候。如果不删除文件，无论内存耗尽到什么程度，内核都不会自动帮你把tmpfs中的文件删除来释放cache空间。
+
+```shell
+root@new-ubuntu-server:~# rm -rf /tmp/tmpfs/testfile
+root@new-ubuntu-server:~# free -g
+total        used        free      shared  buff/cache   available
+Mem:             125           0         125           0           0         124
+Swap:              0           0           0
+```
 
 ### 2.2.2 共享内存
 

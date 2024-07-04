@@ -11,7 +11,8 @@
         * [容器启动状态卡在ContainerCreating](操作系统/linux/memory/问题排查/容器启动状态卡在ContainerCreating.md)
       * [memory总结](操作系统/linux/memory/memory总结.md)
       * 内存分析工具
-      * 内存管理原理实现
+      * 内存管理详解
+        * [深入理解cache](操作系统/linux/memory/内存管理详解/深入理解cache.md)
     * namespace
       * [namespace概览](操作系统/linux/namespace/namespace.md)
       * [mnt-namespace](操作系统/linux/namespace/mnt-namespace.md)
