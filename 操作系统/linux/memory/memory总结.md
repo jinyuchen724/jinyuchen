@@ -418,5 +418,201 @@ Active / Total Objects (% used)    : 881058 / 887480 (99.3%)
 
 ![kmalloc](./images/memory24.png)
 
+内存中还有一些偶发的零碎的内存分配需求，一个模块如果仅仅为了分配一次5字节的内存，就去创建一个slab，那显然不划算。
+为此内核创建了一个统一的零碎内存分配器kmalloc，用户可以直接请求kmalloc分配若干个字节的内存。
+Kmalloc底层用的还是slab机制，kmalloc在启动的时候会预先创建一些不同大小的slab，用户请求分配任意大小的内存，kmalloc都会去大小刚刚满足的slab中去分配内存。
 
 [kmalloc体系](https://www.cnblogs.com/binlovetech/p/17495824.html)
+
+## 三、物理内存回收
+内存资源是系统中最宝贵的系统资源，是有限的。而且内存属于不可压缩资源，当内存资源紧张的时候，系统的应对方法无非就是三种：
+
+- 产生 OOM，内核直接将系统中占用大量内存的进程，将 OOM 优先级最高的进程干掉，释放出这个进程占用的内存供其他更需要的进程分配使用。
+- 内存回收，将不经常使用到的内存回收，腾挪出来的内存供更需要的进程分配使用。
+- 内存规整，将可迁移的物理页面进行迁移规整，消除内存碎片。从而获得更大的一片连续物理内存空间供进程分配。
+
+我们都知道，内核将物理内存划分成一页一页的单位进行管理（每页 4K 大小）。内存回收的单位也是按页来的。在内核中，物理内存页有两种类型，针对这两种类型的物理内存页， 内核会有不同的回收机制。
+- 第一种就是文件页
+所谓文件页就是其物理内存页中的数据来自于磁盘中的文件，当我们进行文件读取的时候，内核会根据局部性原理将读取的磁盘数据缓存在 page cache 中，page cache 里存放的就是文件页。当进程再次读取读文件页中的数据时，
+内核直接会从 page cache 中获取并拷贝给进程，省去了读取磁盘的开销。
+对于文件页的回收通常会比较简单，因为文件页中的数据来自于磁盘，所以当回收文件页的时候直接回收就可以了，当进程再次读取文件页时，大不了再从磁盘中重新读取就是了。
+但是当进程已经对文件页进行修改过但还没来得及同步回磁盘，此时文件页就是脏页，不能直接进行回收，需要先将脏页回写到磁盘中才能进行回收。
+我们可以在进程中通过  fsync()  系统调用将指定文件的所有脏页同步回写到磁盘，同时内核也会根据一定的条件唤醒专门用于回写脏页的 pflush 内核线程。
+
+- 另外一种物理页类型是匿名页
+所谓匿名页就是它背后并没有一个磁盘中的文件作为数据来源，匿名页中的数据都是通过进程运行过程中产生的，比如我们应用程序中动态分配的堆内存。
+当内存资源紧张需要对不经常使用的那些匿名页进行回收时，因为匿名页的背后没有一个磁盘中的文件做依托，所以匿名页不能像文件页那样直接回收，无论匿名页是不是脏页，都需要先将匿名页中的数据先保存在磁盘空间中，然后在对匿名页进行回收。
+并把释放出来的这部分内存分配给更需要的进程使用，当进程再次访问这块内存时，在重新把之前匿名页中的数据从磁盘空间中读取到内存就可以了，而这块磁盘空间可以是单独的一片磁盘分区（Swap 分区）或者是一个特殊的文件（Swap 文件）。匿名页的回收机制就是我们经常看到的 Swap 机制。
+所谓的页面换出就是在 Swap 机制下，当内存资源紧张时，内核就会把不经常使用的这些匿名页中的数据写入到 Swap 分区或者 Swap 文件中。从而释放这些数据所占用的内存空间。
+所谓的页面换入就是当进程再次访问那些被换出的数据时，内核会重新将这些数据从 Swap 分区或者 Swap 文件中读取到内存中来。
+
+综上所述，物理内存区域中的内存回收分为文件页回收（通过 pflush 内核线程）和匿名页回收（通过 kswapd 内核进程）。Swap 机制主要针对的是匿名页回收。
+那么当内存紧张的时候，内核到底是该回收文件页呢？还是该回收匿名页呢？
+事实上 Linux 提供了一个 swappiness 的内核选项，我们可以通过 cat /proc/sys/vm/swappiness  命令查看，swappiness 选项的取值范围为 0 到 100，默认为 60。
+swappiness 用于表示 Swap 机制的积极程度，数值越大，Swap 的积极程度越高，内核越倾向于回收匿名页。数值越小，Swap 的积极程度越低。内核就越倾向于回收文件页。
+注意： swappiness 只是表示 Swap 积极的程度，当内存非常紧张的时候，即使将 swappiness 设置为 0 ，也还是会发生 Swap 的。
+那么到底什么时候内存才算是紧张的？紧张到什么程度才开始 Swap 呢？这一切都需要一个量化的标准，于是就有了本小节的主题 —— 物理内存区域中的水位线。
+我们生产环境上一般都会将swap设置成0，因为如果当内存不足而大量和磁盘做交互，就会导致应用性能变差。
+那么到底什么时候内存才算是紧张的？紧张到什么程度才开始 Swap 呢？这一切都需要一个量化的标准，物理内存区域中的水位线。
+
+
+这三条水位线定义在 /include/linux/mmzone.h 文件中：
+```shell
+enum zone_watermarks {
+ WMARK_MIN,
+ WMARK_LOW,
+ WMARK_HIGH,
+ NR_WMARK
+};
+
+#define min_wmark_pages(z) (z->_watermark[WMARK_MIN] + z->watermark_boost)
+#define low_wmark_pages(z) (z->_watermark[WMARK_LOW] + z->watermark_boost)
+#define high_wmark_pages(z) (z->_watermark[WMARK_HIGH] + z->watermark_boost)
+```
+
+### 3.1 内存回收水位
+![内存水位线](./images/memory25.png)
+
+
+当该物理内存区域的剩余内存容量高于_watermark[WMARK_HIGH] 时，说明此时该物理内存区域中的内存容量非常充足，内存分配完全没有压力。
+当剩余内存容量在 _watermark[WMARK_LOW] 与_watermark[WMARK_HIGH] 之间时，说明此时内存有一定的消耗但是还可以接受，能够继续满足进程的内存分配需求。
+当剩余内容容量在 _watermark[WMARK_MIN] 与 _watermark[WMARK_LOW]  之间时，说明此时内存容量已经有点危险了，内存分配面临一定的压力，但是还可以满足进程的内存分配要求，当给进程分配完内存之后，就会唤醒 kswapd 进程开始内存回收，直到剩余内存高于 _watermark[WMARK_HIGH] 为止。
+在这种情况下，进程的内存分配会触发内存回收，但请求进程本身不会被阻塞，由内核的 kswapd 进程异步回收内存。
+当剩余内容容量低于 _watermark[WMARK_MIN] 时，说明此时的内容容量已经非常危险了，如果进程在这时请求内存分配，内核就会进行直接内存回收，这时请求进程会同步阻塞等待，直到内存回收完毕。
+我们可以通过 cat /proc/zoneinfo 命令来查看不同 NUMA 节点中不同内存区域中的水位线：
+
+```shell
+root@new-ubuntu-server:~#cat /proc/zoneinfo
+Node 0, zone   Normal
+  pages free     31818601
+        min      16547
+        low      48747
+        high     80947
+        spanned  32768000
+        present  32768000
+        managed  32203068
+        cma      0
+        protection: (0, 0, 0, 0, 0)
+      nr_free_pages 31818601
+      nr_zone_inactive_anon 21517
+      nr_zone_active_anon 433
+      nr_zone_inactive_file 126121
+      nr_zone_active_file 100831
+      nr_zone_unevictable 7681
+      nr_zone_write_pending 135
+      nr_mlock     6913
+```
+
+其中大部分字段的含义笔者已经在前面的章节中为大家介绍过了，下面我们只介绍和本小节内容相关的字段含义：
+free 就是该物理内存区域内剩余的内存页数，它的值和后面的 nr_free_pages 相同。
+min、low、high 就是上面提到的三条内存水位线：_watermark[WMARK_MIN]，_watermark[WMARK_LOW] ，_watermark[WMARK_HIGH]。
+nr_zone_active_anon 和 nr_zone_inactive_anon 分别是该内存区域内活跃和非活跃的匿名页数量。
+nr_zone_active_file 和 nr_zone_inactive_file 分别是该内存区域内活跃和非活跃的文件页数量。
+
+
+### 3.2 水位线的计算
+
+在3.1我们介绍了内核通过对物理内存区域设置内存水位线来决定内存回收的时机，那么这三条内存水位线的值具体是多少，内核中是根据什么计算出来的呢？
+事实上 WMARK_MIN，WMARK_LOW ，WMARK_HIGH 这三个水位线的数值是通过内核参数 /proc/sys/vm/min_free_kbytes 为基准分别计算出来的，用户也可以通过 sysctl 来动态设置这个内核参数。
+内核参数 min_free_kbytes 的单位为 KB 。
+
+```shell
+root@new-ubuntu-server:~# cat /proc/sys/vm/min_free_kbytes
+67584
+```
+
+那么min，low，high之间的水位如何计算的呢？
+```shell
+#4.x 内核
+@#cat /proc/zoneinfo |grep min
+        min      82
+        min      6381
+        min      2041536
+        min      0
+        
+@#cat /proc/zoneinfo |grep low
+        low      102
+        low      7976
+        low      2551920
+        low      0
+        
+@#cat /proc/zoneinfo |grep high|grep -v :
+        high     122
+        high     9571
+        high     3062304
+        high     0        
+```
+
+- min->low: 2551920/2041536 = 1.25 
+- min->high: 3062304/2041536 = 1.5
+
+所以在4.x内核我们可以看出来,WMARK_LOW 的值是 WMARK_MIN 的 1.25 倍，WMARK_HIGH 的值是 WMARK_MIN 的 1.5 倍。
+
+```shell
+#5.x内核
+#所有zone min的page数量
+root@new-ubuntu-server:~# cat /proc/zoneinfo |grep min
+        min      1
+        min      359
+        min      16534
+        min      0
+        min      0
+
+#所有zone low的page数量 
+root@new-ubuntu-server:~# cat /proc/zoneinfo |grep low
+        low      4
+        low      1059
+        low      48737
+        low      0
+        low      0
+
+#所有zone high的page数量 
+root@new-ubuntu-server:~# cat /proc/zoneinfo |grep high|grep -v :
+        high     7
+        high     1759
+        high     80940
+        high     0
+        high     0        
+```
+
+但是到了5.x内核我发现规则变了，因为他新增加了一个参数
+```shell
+root@new-ubuntu-server:~# cat /proc/sys/vm/watermark_scale_factor
+10
+```
+
+水位线间距计算公式：(watermark_scale_factor / 10000) * managed_pages 。
+```shell
+zone->watermark[WMARK_MIN] = tmp;
+        // 水位线间距的计算逻辑
+        tmp = max_t(u64, tmp >> 2,
+                mult_frac(zone->managed_pages,
+                      watermark_scale_factor, 10000));
+
+        zone->watermark[WMARK_LOW]  = min_wmark_pages(zone) + tmp;
+        zone->watermark[WMARK_HIGH] = min_wmark_pages(zone) + tmp * 2;
+```
+```shell
+root@new-ubuntu-server:~# cat /proc/meminfo
+MemTotal:       131630080 kB
+```
+
+```shell
+机器内存大小: 131630080KB
+page大小: 4KB
+机器page数量: 131630080/4 = 32907520 
+
+水位线间距page计算 (watermark_scale_factor / 10000) * managed_pages
+32907520*0.001=32907 page 
+
+min: 16534+359+1=16894
+low : 48737+1059+4=49800
+high: 80940+1759+7=82706
+
+low->min=32906
+min->high=32906
+```
+
+## 三、虚拟内存
+
+## 四、内存映射
