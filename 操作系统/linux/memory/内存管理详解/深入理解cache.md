@@ -1,4 +1,3 @@
-# 深入理解内存cache
 
 通过之前的内存总结了解linux中的内存是以page为单位进行管理的，
 Page Cache是Linux内核中的一种缓存机制，用于缓存文件系统中的数据和元数据。
@@ -123,7 +122,7 @@ procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
 
 ## 1.3 写磁盘
 
-我们上vmstat看到除了cache，还有个buffer，那buffer又是什么？
+vmstat看到除了cache，还有个buffer，那buffer又是什么？
 
 ![内存与磁盘关系](../images/mem_page2.png)
 
@@ -521,7 +520,270 @@ Swap:              0           0           0
 ```
 
 ### 2.2.2 共享内存
+共享内存是系统提供给我们的一种常用的进程间通信（IPC）方式，但是这种通信方式不能在shell中申请和使用，所以我们需要一个简单的测试程序，代码如下:
+
+```shell
+root@new-ubuntu-server:~# cat shm.c
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <string.h>
+
+#define MEMSIZE 2048*1024*1023
+
+int
+main()
+{
+    int shmid;
+    char *ptr;
+    pid_t pid;
+    struct shmid_ds buf;
+    int ret;
+
+    shmid = shmget(IPC_PRIVATE, MEMSIZE, 0600);
+    if (shmid<0) {
+        perror("shmget()");
+        exit(1);
+    }
+
+    ret = shmctl(shmid, IPC_STAT, &buf);
+    if (ret < 0) {
+        perror("shmctl()");
+        exit(1);
+    }
+
+    printf("shmid: %d\n", shmid);
+    printf("shmsize: %d\n", buf.shm_segsz);
+
+    buf.shm_segsz *= 2;
+
+    ret = shmctl(shmid, IPC_SET, &buf);
+    if (ret < 0) {
+        perror("shmctl()");
+        exit(1);
+    }
+
+    ret = shmctl(shmid, IPC_SET, &buf);
+    if (ret < 0) {
+        perror("shmctl()");
+        exit(1);
+    }
+
+    printf("shmid: %d\n", shmid);
+    printf("shmsize: %d\n", buf.shm_segsz);
+
+
+    pid = fork();
+    if (pid<0) {
+        perror("fork()");
+        exit(1);
+    }
+    if (pid==0) {
+        ptr = shmat(shmid, NULL, 0);
+        if (ptr==(void*)-1) {
+            perror("shmat()");
+            exit(1);
+        }
+        bzero(ptr, MEMSIZE);
+        strcpy(ptr, "Hello!");
+        exit(0);
+    } else {
+        wait(NULL);
+        ptr = shmat(shmid, NULL, 0);
+        if (ptr==(void*)-1) {
+            perror("shmat()");
+            exit(1);
+        }
+        puts(ptr);
+        exit(0);
+    }
+}
+```
+程序功能就是申请一段不到2G共享内存，然后打开一个子进程对这段共享内存做一个初始化操作，父进程等子进程初始化完之后输出一下共享内存的内容，然后退出。
+但是退出之前并没有删除这段共享内存。我们来看看这个程序执行前后的内存使用：
+
+```shell
+root@new-ubuntu-server:~# gcc -o shm shm.c
+root@new-ubuntu-server:~# free -g
+               total        used        free      shared  buff/cache   available
+Mem:             125           0         124           0           0         124
+Swap:              0           0           0
+root@new-ubuntu-server:~# ./shm
+shmid: 4
+shmsize: 2145386496
+shmid: 4
+shmsize: -4194304
+Hello!
+root@new-ubuntu-server:~# free -g
+               total        used        free      shared  buff/cache   available
+Mem:             125           0         122           2           2         122
+Swap:              0           0           0
+```
+
+执行程序后,系统cache增加了2G
+
+```shell
+root@new-ubuntu-server:~# echo 3 > /proc/sys/vm/drop_caches
+root@new-ubuntu-server:~# free -g
+               total        used        free      shared  buff/cache   available
+Mem:             125           0         123           2           2         122
+Swap:              0           0           0
+```
+执行cache后结果是仍然不可回收。大家可以观察到，这段共享内存即使没人使用，仍然会长期存放在cache中，直到其被删除。
+删除方法有两种，一种是程序中使用shmctl()去IPC_RMID，另一种是使用ipcrm命令。我们来删除试试：
+
+```shell
+root@new-ubuntu-server:~# ipcs -m
+
+------ Shared Memory Segments --------
+key        shmid      owner      perms      bytes      nattch     status
+0x00000000 4          root       600        2145386496 0
+
+root@new-ubuntu-server:~# ipcrm -m 4
+root@new-ubuntu-server:~# ipcs -m
+
+------ Shared Memory Segments --------
+key        shmid      owner      perms      bytes      nattch     status
+
+root@new-ubuntu-server:~# free -g
+               total        used        free      shared  buff/cache   available
+Mem:             125           0         124           0           0         124
+Swap:              0           0           0
+```
+删除共享内存后，cache被正常释放了。这个行为与tmpfs的逻辑类似。内核底层在实现共享内存（shm）、消息队列（msg）和信号量数组（sem）这些POSIX:XSI的IPC机制的内存存储时，使用的都是tmpfs。
+这也是为什么共享内存的操作逻辑与tmpfs类似的原因。当然，一般情况下是shm占用的内存更多，所以我们在此重点强调共享内存的使用。
 
 ### 2.2.3 mmap
 
+mmap()是一个非常重要的系统调用，这仅从mmap本身的功能描述上是看不出来的。从字面上看，mmap就是将一个文件映射进进程的虚拟内存地址，之后就可以通过操作内存的方式对文件的内容进行操作。
+这样就减少了读写文件需要进行用户到内核态数据来回拷贝的问题。可以极大的提高应用的性能，比如es就使用了mmap。
 
+同样，我们也需要一个简单的测试程序：
+```shell
+root@new-ubuntu-server:~# cat mmap.c 
+#include <stdlib.h>
+#include <stdio.h>
+#include <strings.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+#define MEMSIZE 1024*1024*1023*2
+#define MPFILE "./mmapfile"
+
+int main()
+{
+	void *ptr;
+	int fd;
+
+	fd = open(MPFILE, O_RDWR);
+	if (fd < 0) {
+		perror("open()");
+		exit(1);
+	}
+
+	ptr = mmap(NULL, MEMSIZE, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANON, fd, 0);
+	if (ptr == NULL) {
+		perror("malloc()");
+		exit(1);
+	}
+
+	printf("%p\n", ptr);
+	bzero(ptr, MEMSIZE);
+
+	sleep(100);
+
+	munmap(ptr, MEMSIZE);
+	close(fd);
+
+	exit(1);
+}
+```
+
+这次我们就一个进程，申请一段2G的mmap共享内存，然后初始化这段空间之后等待100秒，再解除映射所以我们需要在它sleep这100秒内检查我们的系统内存使用，
+看看它用的是什么空间？当然在这之前要先创建一个2G的文件./mmapfile。结果如下：
+```shell
+root@new-ubuntu-server:~# dd if=/dev/zero of=./mmapfile bs=1G count=2
+2+0 records in
+2+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 2.0204 s, 1.1 GB/s
+
+root@new-ubuntu-server:~# ll -h |grep mmapfile
+-rw-r--r-- 1 root root 2.0G Jul  5 11:59 mmapfile
+
+root@new-ubuntu-server:~# free -g
+               total        used        free      shared  buff/cache   available
+Mem:             125           0         124           0           0         124
+Swap:              0           0
+```
+然后执行测试程序：
+```shell
+root@new-ubuntu-server:~# ./mmap &
+[1] 35490
+0x7fae5dccf000
+
+root@new-ubuntu-server:~# free -g
+               total        used        free      shared  buff/cache   available
+Mem:             125           0         122           2           2         122
+Swap:              0           0           0
+
+#执行cache回收后，mmap还是占用cache
+root@new-ubuntu-server:~# echo 3 > /proc/sys/vm/drop_caches
+root@new-ubuntu-server:~# free -g
+               total        used        free      shared  buff/cache   available
+Mem:             125           0         122           2           2         122
+Swap:              0           0           0
+
+#用pmap看一下这个进程有2GB RSS都在 zero里面
+root@new-ubuntu-server:~# pmap -x 35490
+35490:   ./mmap
+Address           Kbytes     RSS   Dirty Mode  Mapping
+000055c44c149000       4       4       0 r---- mmap
+000055c44c14a000       4       4       0 r-x-- mmap
+000055c44c14b000       4       4       0 r---- mmap
+000055c44c14c000       4       4       4 r---- mmap
+000055c44c14d000       4       4       4 rw--- mmap
+000055c44d97c000     132       4       4 rw---   [ anon ]
+00007fae5dccf000 2095104 2095104 2095104 rw-s- zero (deleted)
+00007faeddacf000      12       8       8 rw---   [ anon ]
+00007faeddad2000     160     160       0 r---- libc.so.6
+00007faeddafa000    1620     920       0 r-x-- libc.so.6
+00007faeddc8f000     352      64       0 r---- libc.so.6
+00007faeddce7000       4       0       0 ----- libc.so.6
+00007faeddce8000      16      16      16 r---- libc.so.6
+00007faeddcec000       8       8       8 rw--- libc.so.6
+00007faeddcee000      52      20      20 rw---   [ anon ]
+00007faeddd01000       8       4       4 rw---   [ anon ]
+00007faeddd03000       8       8       0 r---- ld-linux-x86-64.so.2
+00007faeddd05000     168     168       0 r-x-- ld-linux-x86-64.so.2
+00007faeddd2f000      44      44       0 r---- ld-linux-x86-64.so.2
+00007faeddd3b000       8       8       8 r---- ld-linux-x86-64.so.2
+00007faeddd3d000       8       8       8 rw--- ld-linux-x86-64.so.2
+00007fffe88e7000     132      16      16 rw---   [ stack ]
+00007fffe897d000      16       0       0 r----   [ anon ]
+00007fffe8981000       8       4       0 r-x--   [ anon ]
+ffffffffff600000       4       0       0 --x--   [ anon ]
+---------------- ------- ------- -------
+total kB         2097884 2096584 2095204
+```
+
+```shell
+root@new-ubuntu-server:~# [1]-  Exit 1                  ./mmap
+[12:02:18root@localhost /data]
+root@new-ubuntu-server:~# free -g
+               total        used        free      shared  buff/cache   available
+Mem:             125           0         124           0           0         124
+Swap:              0           0           0
+```
+程序退出之后，cached占用的空间被释放。这样我们可以看到，使用mmap申请标志状态为MAP_SHARED的内存，内核也是使用的cache进行存储的。
+在进程对相关内存没有释放之前，这段cache也是不能被正常释放的。实际上，mmap的MAP_SHARED方式申请的内存，在内核中也是由tmpfs实现的。
+由此我们也可以推测，由于共享库的只读部分在内存中都是以mmap的MAP_SHARED方式进行管理，实际上它们也都是要占用cache且无法被释放的。
+
+
+# 三、page cache总结
+
+![cache总结](../images/mem_page4.png)
