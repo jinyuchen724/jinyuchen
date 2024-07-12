@@ -1,14 +1,40 @@
 # Table of contents
-
-* [操作系统](README.md)
-* [操作系统](cao-zuo-xi-tong-1/README.md)
-  * [linux](cao-zuo-xi-tong-1/linux/README.md)
-    * [cpu](cao-zuo-xi-tong-1/linux/README.md)
-    * [memory](cao-zuo-xi-tong-1/linux/README.md)
-    * [namespace](cao-zuo-xi-tong-1/linux/README.md)
-    * [cgroup](cao-zuo-xi-tong-1/linux/README.md)
-    * [rootfs](cao-zuo-xi-tong-1/linux/README.md)
-* [云原生](cao-zuo-xi-tong-1/linux/README.md)
-* [大数据](cao-zuo-xi-tong-1/linux/README.md)
-* [Devops](cao-zuo-xi-tong-1/linux/README.md)
-* [SRE](cao-zuo-xi-tong-1/linux/README.md)
+* [操作系统](cao-zuo-xi-tong/README.md)
+  * [linux](cao-zuo-xi-tong/linux/README.md)
+    * cpu
+      * [cpu总结](操作系统/linux/cpu/cpu总结.md)
+      * 问题排查
+        * [容器中的业务cpu抖动](操作系统/linux/cpu/问题排查/容器中的业务cpu抖动.md)
+    * memory
+      * 问题排查
+        * [容器中的业务频繁fullgc](操作系统/linux/memory/问题排查/容器中的业务频繁fullgc.md)
+        * [容器启动状态卡在ContainerCreating](操作系统/linux/memory/问题排查/容器启动状态卡在ContainerCreating.md)
+      * [memory总结](操作系统/linux/memory/memory总结.md)
+      * 内存分析工具
+      * 内存管理详解
+        * [深入理解cache](操作系统/linux/memory/内存管理详解/深入理解cache.md)
+    * namespace
+      * [namespace概览](操作系统/linux/namespace/namespace.md)
+      * [mnt-namespace](操作系统/linux/namespace/mnt-namespace.md)
+      * [net-namespace](操作系统/linux/namespace/net-namespace.md)
+      * [pid-namespace](操作系统/linux/namespace/pid-namespace.md)
+      * [user-namespace](操作系统/linux/namespace/user-namespace.md)
+      * [uts-namespace](操作系统/linux/namespace/uts-namespace.md)
+    * cgroup
+      * [cgroup概览](操作系统/linux/cgroup/cgroup.md)
+      * [cgroup-cpu](操作系统/linux/cgroup/cgroup-cpu.md)
+      * [cgroup-memory](操作系统/linux/cgroup/cgroup-memory.md)
+    * rootfs
+      * [rootfs](操作系统/linux/cgroup/rootfs.md)
+* [云原生]()
+  * Docker
+  * Kubernetes
+  * 在离线混部
+    * [在离线混部方案](云原生/在离线混部/在离线混部整体方案.md)
+* [大数据]()
+  * hadoop
+    * yarn
+      * [YarnApplicationMater启动流程分析](大数据/hadoop/yarn/YarnApplicationMater启动流程分析.md)
+* [开发]()
+* [DevOps]()
+* [SRE]()
