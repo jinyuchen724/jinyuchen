@@ -1,4 +1,4 @@
-# yarn如何运行一个applicaiton
+# yarn如何运行一个Application
 
 用户提交应用程序，会调用客户端的ApplicationClientProtoc#submitApplication,进而会调用服务端RMAppManager#submitApplication，此后服务端直到ApplicationMater启动，会涉及ClientRMService、RMAppManager、RMAppImpl、RMAppAttempImpl、RMNode、ResourceScheduler。\
 为了简化整个分析过程，这里仅分析首次提交任务的过程中任务提交到ApplicationMater启动过程，不考虑失败重启的过程。整个过程将围绕着状态机展开。
