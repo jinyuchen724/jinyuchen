@@ -32,11 +32,10 @@
   * [Kubernetes](yun-yuan-sheng/kubernetes.md)
   * [在离线混部](yun-yuan-sheng/zai-li-xian-hun-bu/README.md)
     * [在离线混部方案](云原生/在离线混部/在离线混部整体方案.md)
-* [大数据](yun-yuan-sheng/README.md)
-* [开发](yun-yuan-sheng/README.md)
-* [DevOps](yun-yuan-sheng/README.md)
-* [SRE](yun-yuan-sheng/README.md)
 * [大数据](da-shu-ju.md)
-* [开发](kai-fa.md)
-* [DevOps](devops.md)
-* [SRE](sre.md)
+  * hadoop
+    * yarn
+      * [YarnApplicationMater启动流程分析](大数据/hadoop/yarn/YarnApplicationMater启动流程分析.md)
+* [开发]()
+* [DevOps]()
+* [SRE]()
