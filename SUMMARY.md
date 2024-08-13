@@ -27,8 +27,8 @@
       * [cgroup-memory](操作系统/linux/cgroup/cgroup-memory.md)
     * [rootfs](cao-zuo-xi-tong/linux/rootfs/README.md)
       * [rootfs](操作系统/linux/cgroup/rootfs.md)
-    * [network]
-      * [问题排查]
+    * network
+      * 问题排查
         * [机器内存故障后,为啥超时10m+,业务才恢复正常](操作系统/linux/network/问题排查/redis-client超时问题排查.md)
         * [支付业务迁移容器后,为啥出现线上大规模超时](操作系统/linux/network/问题排查/支付业务大规模超时.md)
         * [创建一台新的kvm机器后,为啥线上服务断断续续反复超时](操作系统/linux/network/问题排查/创建新机器后线上服务反复超时.md)
