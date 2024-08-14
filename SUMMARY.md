@@ -41,6 +41,8 @@
   * [hadoop](大数据/hadoop/README.md)
     * [yarn](大数据/hadoop/yarn.md)
       * [YarnApplicationMater启动流程分析](大数据/hadoop/yarn/YarnApplicationMater启动流程分析.md)
+    * hdfs
+      * [HDFS-EC实践](大数据/hadoop/hdfs/HDFS-EC实践.md)
 * [SRE](SRE/README.md)
 *
 *
