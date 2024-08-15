@@ -7,6 +7,7 @@
 ## 二、问题排查
 
 遇到这个问题第一反应就是oom了，于是去看了下内核日志：
+
 ![](../images/mem-tmpfs1.png)
 
 分析了一下oom的dump,计算rss（需要*4，因为是rss是按照4k一个page去分配的） 这一列相加 大概是6G，这个数据和监控也符合大概75%的实际使用率(容器分配的是8G)。
@@ -40,14 +41,17 @@ echo 3 > /proc/sys/vm/drop_caches
 在之前的文章<<深入理解cache>>中，我们知道cache是怎么产生的，有文件页，匿名页面，当然还有一些无法直接回收的内存。
 于是便开始检查：
 发现挂载了一个tmpfs类型的目录。
+
 ![](../images/mem-tmpfs9.png)
 
 看到这里那就知道这部分cache占用应该就是这个tmpfs导致的了，那这个tmpfs里面又是谁在用呢？
 
 罪魁祸首就是journal了～
+
 ![](../images/mem-tmpfs7.png)
 
 容器中journal的配置：
+
 ![](../images/mem-tmpfs10.png)
 
 ```shell
