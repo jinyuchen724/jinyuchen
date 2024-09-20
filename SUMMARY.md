@@ -33,6 +33,8 @@
         * [机器内存故障后,为啥超时10m+,业务才恢复正常](操作系统/linux/network/问题排查/网络TCP重传问题—redis-client超时问题排查.md)
         * [支付业务迁移容器后,为啥出现线上大规模超时](操作系统/linux/network/问题排查/网络arp问题—支付业务大规模超时.md)
         * [创建一台新的kvm机器后,为啥线上服务断断续续反复超时](操作系统/linux/network/问题排查/网络mac地址冲突—创建新机器后线上服务反复超时.md)
+    * arm
+      * [arm板子烧入镜像大小优化](操作系统/linux/arm/image.md)
 * [云原生](<README (1).md>)
   * [Docker](yun-yuan-sheng/docker.md)
   * [Kubernetes](yun-yuan-sheng/kubernetes.md)
