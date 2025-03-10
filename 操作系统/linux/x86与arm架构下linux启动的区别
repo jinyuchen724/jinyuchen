@@ -1,0 +1,12 @@
+https://www.cnblogs.com/f-ck-need-u/p/17718715.html
+
+https://jaminzhang.github.io/linux/Linux-boot-process/
+
+
+
+
+
+
+			x86	bios		boot loader(grub2)	kernel	init	runlevel
+				mbr(最大4个分区)	gpt+UEFI(支持大于2T)
+			arm			boot loader(uboot)	kernel
