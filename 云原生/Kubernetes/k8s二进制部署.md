@@ -1,8 +1,8 @@
-## 一、k8s环境部署
+# 一、k8s环境部署
 
-### 2.1 搭建etcd集群
+## 1.1 搭建etcd集群
 
-#### 2.1.1 安装签发证书工具cfssl
+### 1.1.1 安装签发证书工具cfssl
 
 ```shell
 [root@k8s-host /root]# wget https://pkg.cfssl.org/R1.2/cfssl_linux-amd64
@@ -14,7 +14,7 @@
 [root@k8s-host /root]# mv cfssl-certinfo_linux-amd64 /usr/local/bin/cfssl-certinfo
 ```
 
-#### 2.1.2 配置ca证书
+### 1.1.2 配置ca证书
 
 >- 生成ca证书请求文件
 ```shell
@@ -74,8 +74,7 @@ ca.csr  ca-csr.json  ca-key.pem  ca.pem
 }
 ```
 
-
-#### 2.1.3 生成etcd证书
+### 1.1.3 生成etcd证书
 >- 主要关注host里的配置,这里最好用域名,ip万一变了证书失效,会比较麻烦
 
 ```shell
@@ -122,7 +121,7 @@ etcd-key.pem  etcd.pem
 ```
 
 
-#### 2.1.4 部署 etcd 集群
+#### 1.1.4 部署 etcd 集群
 
 >- 下载安装包
 ```shell
@@ -221,7 +220,7 @@ ca.pem  etcd-key.pem  etcd.pem
 ```
 
 >- 查看 etcd 集群
-
+```shell
 [root@k8s-host]# ETCDCTL_API=3 && /usr/bin/etcdctl --write-out=table --cacert=/etc/etcd/ssl/ca.pem --cert=/etc/etcd/ssl/etcd.pem --key=/etc/etcd/ssl/etcd-key.pem --endpoints=https://10.160.65.28:2379,https://10.160.69.230:2379,https://10.160.65.147:2379 endpoint health+---------------------------+--------+-------------+-------+
 +----------------------------+--------+-------------+-------+
 |          ENDPOINT          | HEALTH |    TOOK     | ERROR |
@@ -230,8 +229,9 @@ ca.pem  etcd-key.pem  etcd.pem
 |  https://10.160.65.28:2379 |   true | 14.669041ms |       |
 | https://10.160.69.230:2379 |   true | 20.950313ms |       |
 +----------------------------+--------+-------------+-------+
+```
 
-### 2.2 安装kubernetes组件
+## 2.2 安装kubernetes组件
 
 下载安装包,二进制包所在的 github 地址如下：
 https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/
@@ -245,7 +245,7 @@ https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/
 [root@k8s-host ]# mkdir -p /var/log/kubernetes
 ```
 
-#### 2.2.1 部署 apiserver 组件
+### 2.2.1 部署 apiserver 组件
 
 启动 TLS Bootstrapping 机制
 
@@ -287,7 +287,6 @@ token.csv 格式:
 $(head -c 16 /dev/urandom | od -An -t x | tr -d ' '),kubelet-bootstrap,10001,"system:kubelet-bootstrap"
 EOF
 ```
-
 
 - 格式：token，用户名，UID，用户组
 创建 csr 请求文件，替换为自己机器的 IP
@@ -442,23 +441,19 @@ WantedBy=multi-user.target
 ```
 
 
-### 2.3 部署 kubectl 组件
-#### 2.3.1 kubectl组件介绍
+### 2.2.2 部署 kubectl 组件
+
 Kubectl 是客户端工具，操作k8s 资源的，如增删改查等。
-
 Kubectl 操作资源的时候，怎么知道连接到哪个集群，需要一个文件/etc/kubernetes/admin.conf，kubectl 会根据这个文件的配置，去访问 k8s 资源。
-
-/etc/kubernetes/admin.conf 文件记录了访问的 k8s 集群，和用到的证书。可以设置一个环境变量 KUBECONFIG
-
-[root@ k8s-master1 ~]# export KUBECONFIG=/etc/kubernetes/admin.conf
-这样在操作 kubectl，就会自动加载 KUBECONFIG 来操作要管理哪个集群的 k8s 资源了也可以按照下面方法，这个是在 kubeadm 初始化 k8s 的时候会提示我们要用的一个方法
-
-[root@ k8s-master1 ~]# cp /etc/kubernetes/admin.conf /root/.kube/config
+/etc/kubernetes/admin.conf 文件记录了访问的 k8s 集群，和用到的证书。可以设置一个环境变量 KUBECONFIG。
+export KUBECONFIG=/etc/kubernetes/admin.conf
+这样在操作 kubectl，就会自动加载 KUBECONFIG 来操作要管理哪个集群的 k8s 资源了也可以按照下面方法，
+这个是在 kubeadm 初始化 k8s 的时候会提示我们要用的一个方法 cp /etc/kubernetes/admin.conf /root/.kube/config
 这样我们在执行 kubectl，就会加载/root/.kube/config 文件，去操作 k8s 资源了
 
 如果设置了 KUBECONFIG，那就会先找到 KUBECONFIG 去操作 k8s，如果没有 KUBECONFIG变量，那就会使用/root/.kube/config 文件决定管理哪个 k8s 集群的资源注意：admin.conf 还没创建，下面步骤创建
 
-#### 2.3.2 创建 csr 请求文件
+#### 2.2.2.1 创建 csr 请求文件
 ```shell
 [root@k8s-host ]# cat admin-csr.json
 {
@@ -480,7 +475,6 @@ Kubectl 操作资源的时候，怎么知道连接到哪个集群，需要一个
 }
 ```
 
-
 说明： 后续 kube-apiserver 使用 RBAC 对客户端(如 kubelet、kube-proxy、Pod)请求进行授权； kube-apiserver 预定义了一些 RBAC 使用的 RoleBindings，如 cluster-admin 将 Group system:masters 与 Role cluster-admin 绑定，
 该 Role 授予了调用 kube-apiserver 的所有 API 的权限； O 指定该证书的 Group 为 system:masters，kubelet 使用该证书访问 kube-apiserver 时 ，由于证书被 CA 签名，所以认证通过，同时由于证书用户组为经过预授权的system:masters，所以被授予访问所有 API 的权限；
 
@@ -492,10 +486,10 @@ clusterrolebinding 报错。
 
 证书 O 配置为 system:masters 在集群内部 cluster-admin 的 clusterrolebinding 将system:masters 组和cluster-admin clusterrole 绑定在一起
 
-#### 2.3.3 生成客户端的证书
+#### 2.2.2.2 生成客户端的证书
 
 ```shell
-[root@k8s-host ]#  cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=kubernetes admin-csr.json | cfssljson -bare admin
+[root@k8s-host ]# cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=kubernetes admin-csr.json | cfssljson -bare admin
 2025/03/07 17:36:10 [INFO] generate received request
 2025/03/07 17:36:10 [INFO] received CSR
 2025/03/07 17:36:10 [INFO] generating key: rsa-2048
@@ -505,12 +499,11 @@ clusterrolebinding 报错。
 websites. For more information see the Baseline Requirements for the Issuance and Management
 of Publicly-Trusted Certificates, v.1.1.6, from the CA/Browser Forum (https://cabforum.org);
 specifically, section 10.2.3 ("Information Requirements").
-```
-
 
 [root@k8s-host ]# cp admin*.pem /etc/kubernetes/ssl/
+```
 
-#### 2.3.4 配置安全上下文
+#### 2.2.2.3 配置安全上下文
 
 #创建 kubeconfig 配置文件，比较重要
 
@@ -563,16 +556,13 @@ users:
     client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJ...
 ```
 
-
 3.设置上下文参数
 ```shell
 [root@k8s-host ]# kubectl config set-context kubernetes --cluster=kubernetes --user=admin --kubeconfig=kube.config
 Context "kubernetes" created
 ```
 
-
 4.设置当前上下文
-
 ```shell
 [root@k8s-host ]# kubectl config use-context kubernetes --kubeconfig=kube.config
 Switched to context "kubernetes".
@@ -581,7 +571,6 @@ Switched to context "kubernetes".
 [root@k8s-host ]# cp kube.config /etc/kubernetes/admin.conf
 [root@k8s-host ]# echo "export KUBECONFIG=/etc/kubernetes/admin.conf" >> ~/.bash_profile
 ```
-
 
 5.授权 kubernetes 证书访问kubelet api 权限
 ```shell
@@ -608,9 +597,8 @@ NAMESPACE   NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S) 
 default     service/kubernetes   ClusterIP   10.255.0.1   <none>        443/TCP   36m
 ```
 
-
-### 2.4 部署 kube-controller-manager 组件
-#### 2.4.1 创建 kube-controller-manager csr 请求文件
+### 2.2.3 部署 kube-controller-manager 组件
+#### 2.2.3.1 创建 kube-controller-manager csr 请求文件
 ```shell
 [root@k8s-host ]# cat kube-controller-manager-csr.json
 {
@@ -654,7 +642,7 @@ CN 为 system:kube-controller-manager
 O 为 system:kube-controller-manager，
 kubernetes 内置的 ClusterRoleBindings system:kube-controller-manager 赋予 kube-controller-manager 工作所需的权限
 
-#### 2.4.2 生成 kube-controller-manager证书
+#### 2.2.3.2 生成 kube-controller-manager证书
 ```shell
 [root@k8s-host ]# cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=kubernetes kube-controller-manager-csr.json | cfssljson -bare kube-controller-manager
 2025/03/10 14:28:11 [INFO] generate received request
@@ -668,7 +656,7 @@ of Publicly-Trusted Certificates, v.1.1.6, from the CA/Browser Forum (https://ca
 specifically, section 10.2.3 ("Information Requirements").
 ```
 
-#### 2.4.3 创建 kube-controller-manager 的 kubeconfig
+#### 2.2.3.3 创建 kube-controller-manager 的 kubeconfig
 
 1.设置集群参数
 ```shell
@@ -724,7 +712,7 @@ Context "system:kube-controller-manager" created.
 Switched to context "system:kube-controller-manager"
 ```
 
-#### 2.4.4 创建kube-controller-manager配置文件
+#### 2.2.3.4 创建kube-controller-manager配置文件
 ```shell
 [root@k8s-host ]# cat kube-controller-manager.conf
 KUBE_CONTROLLER_MANAGER_OPTS="--port=0 \
@@ -758,7 +746,7 @@ KUBE_CONTROLLER_MANAGER_OPTS="--port=0 \
   --v=2"
 ```
 
-#### 2.4.5 创建kube-controller-manager启动文件
+#### 2.2.3.5 创建kube-controller-manager启动文件
 ```shell
 [root@k8s-host ]# cat kube-controller-manager.service
 [Unit]
@@ -777,7 +765,7 @@ LimitNOFILE=65536
 WantedBy=multi-user.target
 ```
 
-#### 2.4.6 启动 kube-controller-manager服务
+#### 2.2.4.6 启动 kube-controller-manager服务
 ```shell
 [root@k8s-host ]# cp kube-controller-manager*.pem /etc/kubernetes/ssl/
 [root@k8s-host ]# cp kube-controller-manager.kubeconfig /etc/kubernetes/
@@ -789,8 +777,8 @@ WantedBy=multi-user.target
 
 其他节点类似,这里不赘述...
 
-### 2.5 部署 kube-scheduler 组件
-#### 2.5.1 创建kube-scheduler的csr 请求
+### 2.2.4 部署 kube-scheduler 组件
+#### 2.2.4.1 创建kube-scheduler的csr 请求
 
 ```shell
 [root@k8s-host ]# cat kube-scheduler-csr.json
@@ -831,7 +819,7 @@ WantedBy=multi-user.target
 
 注： hosts 列表包含所有 kube-scheduler 节点 IP； CN 为 system:kube-scheduler、O 为 system:kube-scheduler，kubernetes 内置的 ClusterRoleBindings system:kube-scheduler 将赋予  kube-scheduler 工作所需的权限。
 
-#### 2.5.2 生成kube-scheduler证书
+#### 2.2.4.2 生成kube-scheduler证书
 ```shell
 [root@k8s-host ]# cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=kubernetes kube-scheduler-csr.json | cfssljson -bare kube-scheduler
 2025/03/10 15:33:27 [INFO] generate received request
@@ -845,7 +833,7 @@ of Publicly-Trusted Certificates, v.1.1.6, from the CA/Browser Forum (https://ca
 specifically, section 10.2.3 ("Information Requirements").
 ```
 
-#### 2.5.3 创建 kube-scheduler 的 kubeconfig文件
+#### 2.2.4.3 创建 kube-scheduler 的 kubeconfig文件
 
 1.设置集群参数
 ```shell
@@ -901,7 +889,7 @@ Context "system:kube-scheduler" created
 Switched to context "system:kube-scheduler"
 ```
 
-#### 2.5.4 创建配置文件 kube-scheduler的配置文件
+#### 2.2.4.4 创建配置文件 kube-scheduler的配置文件
 ```shell
 [root@k8s-host ]# cat kube-scheduler.conf
 KUBE_SCHEDULER_OPTS="--address=10.160.65.28 \
@@ -913,7 +901,7 @@ KUBE_SCHEDULER_OPTS="--address=10.160.65.28 \
 --v=2"
 ```
 
-#### 2.5.5 创建kube-scheduler的服务启动文件
+#### 2.2.4.5 创建kube-scheduler的服务启动文件
 ```shell
 [root@k8s-host ]# cat kube-scheduler.service
 [Unit]
@@ -930,31 +918,32 @@ RestartSec=5
 WantedBy=multi-user.target
 ```
 
-#### 2.5.6 拷贝文件到master2节点并启动服务
+#### 2.2.4.6 拷贝文件并启动服务
 ```shell
 [root@k8s-host ]# cp kube-scheduler*.pem /etc/kubernetes/ssl/
 [root@k8s-host ]# cp kube-scheduler.kubeconfig /etc/kubernetes/
 [root@k8s-host ]# cp kube-scheduler.conf /etc/kubernetes/
 [root@k8s-host ]# cp kube-scheduler.service /usr/lib/systemd/system/
 [root@k8s-host ]# systemctl daemon-reload &&  systemctl enable kube-scheduler && systemctl start kube-scheduler && systemctl status kube-scheduler
-[root@k8s-master2]# systemctl daemon-reload && systemctl enable kube-scheduler && systemctl start kube-scheduler && systemctl status kube-scheduler
 ```
 
-### 2.6 部署docker组件
-注:这里docker使用的devicemapper存储模式,另外镜像也是本地harbor仓库拉好的
+其他节点类似,这里不赘述...
+
+### 2.2.5 部署docker组件
+注:这里docker使用的devicemapper存储模式,另外镜像、deb包也是本地harbor仓库拉好的
+在node节点执行:
 ```shell
-apt-get remove -y docker-ce docker-ce-cli containerd.io 1>/dev/null 2>&1
-    rm -rf /var/lib/docker
-    wget -P /tmp/ http://apt.idcvdian.com/k8s/docker-ce_20.10.13~3-0~ubuntu-jammy_amd64.deb
-    wget -P /tmp/ http://apt.idcvdian.com/k8s/docker-ce-cli_20.10.17~3-0~ubuntu-jammy_amd64.deb
-    wget -P /tmp/ http://apt.idcvdian.com/k8s/containerd.io_1.6.9-1_amd64.deb
-    wget -P /tmp/ http://apt.idcvdian.com/k8s/docker-scan-plugin_0.17.0~ubuntu-jammy_amd64.deb
-    dpkg -i /tmp/containerd.io_1.6.9-1_amd64.deb
-    dpkg -i /tmp/docker-ce-cli_20.10.17~3-0~ubuntu-jammy_amd64.deb
-    dpkg -i /tmp/docker-scan-plugin_0.17.0~ubuntu-jammy_amd64.deb
-    dpkg -i /tmp/docker-ce_20.10.13~3-0~ubuntu-jammy_amd64.deb
-    mkdir -p /etc/docker
-    cat <<EOF > /etc/docker/daemon.json
+[root@k8s-node-host ]# apt-get remove -y docker-ce docker-ce-cli containerd.io 1>/dev/null 2>&1
+[root@k8s-node-host ]# rm -rf /var/lib/docker
+[root@k8s-node-host ]# wget -P /tmp/ http://apt.idcvdian.com/k8s/docker-ce_20.10.13~3-0~ubuntu-jammy_amd64.deb
+[root@k8s-node-host ]# wget -P /tmp/ http://apt.idcvdian.com/k8s/docker-ce-cli_20.10.17~3-0~ubuntu-jammy_amd64.deb
+[root@k8s-node-host ]# wget -P /tmp/ http://apt.idcvdian.com/k8s/containerd.io_1.6.9-1_amd64.deb
+[root@k8s-node-host ]# wget -P /tmp/ http://apt.idcvdian.com/k8s/docker-scan-plugin_0.17.0~ubuntu-jammy_amd64.deb
+[root@k8s-node-host ]# dpkg -i /tmp/docker-ce-cli_20.10.17~3-0~ubuntu-jammy_amd64.deb
+[root@k8s-node-host ]# dpkg -i /tmp/docker-scan-plugin_0.17.0~ubuntu-jammy_amd64.deb
+[root@k8s-node-host ]# dpkg -i /tmp/docker-ce_20.10.13~3-0~ubuntu-jammy_amd64.deb
+[root@k8s-node-host ]# mkdir -p /etc/docker
+[root@k8s-node-host ]# cat <<EOF > /etc/docker/daemon.json
 {
     "storage-driver": "devicemapper",
     "insecure-registries":["nexus.vdian.net:8082","nexus.vdian.net:8083","nexus.vdian.net:8081","harbor.vdian.net"],
@@ -976,23 +965,23 @@ apt-get remove -y docker-ce docker-ce-cli containerd.io 1>/dev/null 2>&1
 	     }  
 }
 EOF
-    systemctl daemon-reload 1>/dev/null 2>&1
-    systemctl restart docker 1>/dev/null 2>&1
-    systemctl enable docker 1>/dev/null 2>&1
-    #安装完通过docker images确保以下镜像已经存在,不然docker调度上来再通过公网拉会很慢
-    #异常情况docker启动失败这步会失败
-    docker pull harbor.vdian.net/k8s-base/pause:3.1 1>/dev/null 2>&1
-    docker tag harbor.vdian.net/k8s-base/pause:3.1 k8s.gcr.io/pause:3.1 1>/dev/null 2>&1
-    docker rmi harbor.vdian.net/k8s-base/pause:3.1 1>/dev/null 2>&1
-    docker pull harbor.vdian.net/library/prom/node-exporter 1>/dev/null 2>&1
-    docker tag harbor.vdian.net/library/prom/node-exporter prom/node-exporter 1>/dev/null 2>&1
-    docker rmi harbor.vdian.net/library/prom/node-exporter 1>/dev/null 2>&1
+[root@k8s-node-host ]# systemctl daemon-reload
+[root@k8s-node-host ]# systemctl restart docker 1>/dev/null 2>&1
+[root@k8s-node-host ]# systemctl enable docker 1>/dev/null 2>&1
+#安装完通过docker images确保以下镜像已经存在,不然docker调度上来再通过公网拉会很慢
+#异常情况docker启动失败这步会失败
+[root@k8s-node-host ]# docker pull harbor.vdian.net/k8s-base/pause:3.1 1>/dev/null 2>&1
+[root@k8s-node-host ]# docker tag harbor.vdian.net/k8s-base/pause:3.1 k8s.gcr.io/pause:3.1 1>/dev/null 2>&1
+[root@k8s-node-host ]# docker rmi harbor.vdian.net/k8s-base/pause:3.1 1>/dev/null 2>&1
+[root@k8s-node-host ]# docker pull harbor.vdian.net/library/prom/node-exporter 1>/dev/null 2>&1
+[root@k8s-node-host ]# docker tag harbor.vdian.net/library/prom/node-exporter prom/node-exporter 1>/dev/null 2>&1
+[root@k8s-node-host ]# docker rmi harbor.vdian.net/library/prom/node-exporter 1>/dev/null 2>&1
 ```
 
-### 2.7 部署 kubelet 组件
+### 2.2.6 部署 kubelet 组件
 kubelet： 每个 Node 节点上的 kubelet 定期就会调用 API Server 的 REST 接口报告自身状态， API Server 接收这些信息后，将节点状态信息更新到 etcd 中。kubelet 也通过 API Server 监听 Pod信息，从而对 Node 机器上的 POD 进行管理，如创建、删除、更新 Pod
 
-#### 2.7.1 创建 kubelet-bootstrap.kubeconfig
+#### 2.2.6.1 创建 kubelet-bootstrap.kubeconfig
 ```shell
 [root@k8s-host ]# BOOTSTRAP_TOKEN=$(awk -F "," '{print $1}' /etc/kubernetes/token.csv)
 [root@k8s-host ]# kubectl config set-cluster kubernetes --certificate-authority=ca.pem --embed-certs=true --server=https://bigdata-spark-k8s.idcvdian.com:443 --kubeconfig=kubelet-bootstrap.kubeconfig
@@ -1051,7 +1040,7 @@ users:
 [root@k8s-host ]# kubectl create clusterrolebinding kubelet-bootstrap --clusterrole=system:node-bootstrapper --user=kubelet-bootstrap
 ```
 
-#### 2.7.2 创建配置文件 kubelet.json
+#### 2.2.6.2 创建配置文件 kubelet.json
 "cgroupDriver": "systemd"要和 docker 的驱动一致。
 
 address 替换为自己 k8s-node1 的 IP 地址。
@@ -1091,7 +1080,7 @@ address 替换为自己 k8s-node1 的 IP 地址。
 }
 ```
 
-#### 2.7.3 创建kubelet服务启动文件
+#### 2.2.6.3 创建kubelet服务启动文件
 ```shell
 [root@k8s-host ]# cat kubelet.service
 [Unit]
@@ -1154,7 +1143,7 @@ WantedBy=multi-user.target
 #注：kubelete.json 配置文件 address 改为各个节点的 ip 地址，在各个 work 节点上启动服务
 ```
 
-#### 2.7.4 拷贝kubelet的证书及配置文件到node节点
+#### 2.2.6.4 拷贝kubelet的证书及配置文件到node节点
 ```shell
 [root@k8s-node1 ~]# mkdir /etc/kubernetes/ssl -p
 [root@k8s-host ]# scp kubelet-bootstrap.kubeconfig kubelet.json k8s-node1:/etc/kubernetes/
@@ -1162,7 +1151,7 @@ WantedBy=multi-user.target
 [root@k8s-host ]# scp  kubelet.service k8s-node1:/usr/lib/systemd/system/
 ```
 
-#### 2.7.5 在node节点上启动 kubelet 服务
+#### 2.2.6.5 在node节点上启动 kubelet 服务
 ```shell
 [root@k8s-node1 ~]# mkdir /var/log/kubernetes
 [root@k8s-node1 ~]# systemctl daemon-reload && systemctl enable kubelet &&  systemctl start kubelet && systemctl status kubelet
@@ -1176,13 +1165,13 @@ NAME                                                   AGE   SIGNERNAME         
 node-csr-UIwBToi0tiFkb6wLdk81y4LC_rVjSiUpDr3qCZBNDo0   8s    kubernetes.io/kube-apiserver-client-kubelet   kubelet-bootstrap   <none>              Pending
 ```
 
-#### 2.7.6 在master节点审批node节点的请求
+#### 2.2.6.6 在master节点审批node节点的请求
 ```shell
 [root@k8s-host ]# kubectl certificate approve node-csr-UIwBToi0tiFkb6wLdk81y4LC_rVjSiUpDr3qCZBNDo0
 certificatesigningrequest.certificates.k8s.io/node-csr-UIwBToi0tiFkb6wLdk81y4LC_rVjSiUpDr3qCZBNDo0 approved
 ```
 
-# 再次查看申请
+再次查看申请
 ```shell
 [root@k8s-host ]# kubectl get csr
 NAME                                                   AGE   SIGNERNAME                                    REQUESTOR           REQUESTEDDURATION   CONDITION
@@ -1190,14 +1179,13 @@ node-csr-UIwBToi0tiFkb6wLdk81y4LC_rVjSiUpDr3qCZBNDo0   67s   kubernetes.io/kube-
 ```
 
 在master上查看一下node节点是否已经正常加入进来了
-
 ```shell
 [root@k8s-host ]# kubectl get node
 NAME          STATUS   ROLES    AGE   VERSION
 10.16.6.158   Ready    <none>   50s   v1.23.2
 ```
 
-#### 2.7.7 安装网络插件
+#### 2.2.6.7 安装网络插件
 
 这里用的macvlan,每个公司所用的网络模式有区别。需要自行考虑
 
@@ -1235,10 +1223,10 @@ bridge  dhcp  flannel  host-local  ipvlan  loopback  macvlan  portmap  ptp  samp
 }
 ```
 
-### 2.8 部署 kube-proxy 组件
-#### 2.8.1 创建kube-proxy的 csr 请求
-[root@k8s-host ]# cat kube-proxy-csr.json
+### 2.2.7 部署 kube-proxy 组件
+#### 2.2.7.1 创建kube-proxy的 csr 请求
 ```shell
+[root@k8s-host ]# cat kube-proxy-csr.json
 {
   "CN": "system:kube-proxy",
   "key": {
@@ -1257,7 +1245,7 @@ bridge  dhcp  flannel  host-local  ipvlan  loopback  macvlan  portmap  ptp  samp
 }
 ```
 
-#### 2.7.2 生成证书
+#### 2.2.7.2 生成证书
 ```shell
 [root@k8s-host ]# cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=kubernetes kube-proxy-csr.json | cfssljson -bare kube-proxy
 2025/03/10 17:11:25 [INFO] generate received request
@@ -1271,7 +1259,7 @@ of Publicly-Trusted Certificates, v.1.1.6, from the CA/Browser Forum (https://ca
 specifically, section 10.2.3 ("Information Requirements").
 ```
 
-#### 2.7.3 创建 kubeconfig 文件
+#### 2.2.7.3 创建 kubeconfig 文件
 ```shell
 [root@k8s-host ]# kubectl config set-cluster kubernetes --certificate-authority=ca.pem --embed-certs=true --server=https://bigdata-spark-k8s.idcvdian.com:443 --kubeconfig=kube-proxy.kubeconfig
 [root@k8s-host ]# cat kube-proxy.kubeconfig
@@ -1307,7 +1295,7 @@ users:
 [root@k8s-host ]# kubectl config use-context default --kubeconfig=kube-proxy.kubeconfig
 ```
 
-#### 2.7.4 创建 kube-proxy 配置文件
+#### 2.2.7.4 创建 kube-proxy 配置文件
 ```shell
 [root@k8s-host ]# cat kube-proxy.yaml
 apiVersion: kubeproxy.config.k8s.io/v1alpha1
@@ -1321,7 +1309,7 @@ metricsBindAddress: 10.16.6.158:10249
 mode: "ipvs"
 ```
 
-#### 2.7.5 创建kube-proxy服务启动文件
+#### 2.2.7.5 创建kube-proxy服务启动文件
 ```shell
 [root@k8s-host ]# cat kube-proxy.service
 [Unit]
@@ -1345,19 +1333,19 @@ LimitNOFILE=65536
 WantedBy=multi-user.target
 ```
 
-#### 2.7.6 拷贝kube-proxy文件到node节点上
+#### 2.2.7.6 拷贝kube-proxy文件到node节点上
 ```shell
 [root@k8s-host ]# scp kube-proxy.kubeconfig kube-proxy.yaml 10.16.6.158:/etc/kubernetes/
 [root@k8s-host ]# /root]# work]#scp  kube-proxy.service 10.16.6.158:/usr/lib/systemd/system/
 ```
 
-#### 2.7.7 启动kube-proxy服务
+#### 2.2.7.7 启动kube-proxy服务
 ```shell
 [root@k8s-node1 ~]# mkdir -p /var/lib/kube-proxy
 [root@k8s-node1 ~]# systemctl daemon-reload && systemctl enable kube-proxy && systemctl start kube-proxy && systemctl status kube-proxy
 ```
 
-## END
+# END
 ```shell
 [root@k8s-host ]# kubectl get node
 NAME          STATUS   ROLES    AGE   VERSION
