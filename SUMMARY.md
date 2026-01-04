@@ -35,7 +35,7 @@
         * [创建一台新的kvm机器后,为啥线上服务断断续续反复超时](操作系统/linux/network/问题排查/网络mac地址冲突—创建新机器后线上服务反复超时.md)
     * arm
       * [arm板子烧入镜像大小优化](操作系统/linux/arm/image.md)
-* [云原生](<README (1).md>)
+* [云原生](<README.md>)
   * [Docker](yun-yuan-sheng/docker.md)
   * [Kubernetes](yun-yuan-sheng/kubernetes.md)
     * [k8s-1.27.2 二进制方式搭建](云原生/Kubernetes/k8s二进制部署.md)
@@ -48,5 +48,5 @@
     * hdfs
       * [HDFS-EC实践](大数据/hadoop/hdfs/HDFS-EC实践.md)
 * [SRE](SRE/README.md)
-*
-*
+* [AI] (AI/README.md)
+  * Qwen3-8B在华为昇腾平台上的微调与推理(基于AutoDL)(AI/autoDl-ascend.md)
