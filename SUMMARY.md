@@ -48,5 +48,5 @@
     * hdfs
       * [HDFS-EC实践](大数据/hadoop/hdfs/HDFS-EC实践.md)
 * [SRE](SRE/README.md)
-* [AI] (AI/README.md)
-  * Qwen3-8B在华为昇腾平台上的微调与推理(基于AutoDL)(AI/autoDl-ascend.md)
+* [AI](AI/README.md)
+  * [Qwen3在华为昇腾平台上的微调与推理](基于AutoDL)(AI/autoDl-ascend.md)
