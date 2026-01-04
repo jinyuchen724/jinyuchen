@@ -41,7 +41,6 @@
     * [k8s-1.27.2 二进制方式搭建](云原生/Kubernetes/k8s二进制部署.md)
   * [在离线混部](yun-yuan-sheng/zai-li-xian-hun-bu/README.md)
     * [在离线混部方案](云原生/在离线混部/在离线混部整体方案.md)
-    * [Qwen3在华为昇腾平台上的微调与推理](基于AutoDL)(../../AI/autoDl-ascend.md)
 * [大数据](大数据/README.md)
   * [hadoop](大数据/hadoop/README.md)
     * [yarn](大数据/hadoop/yarn.md)
@@ -50,4 +49,4 @@
       * [HDFS-EC实践](大数据/hadoop/hdfs/HDFS-EC实践.md)
 * [SRE](SRE/README.md)
 * [AI](AI/README.md)
-  * [Qwen3在华为昇腾平台上的微调与推理](基于AutoDL)(AI/autoDl-ascend.md)
+  * [Qwen3在华为昇腾平台上的微调与推理](AI/autoDl-ascend.md)
