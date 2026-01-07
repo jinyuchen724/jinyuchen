@@ -39,7 +39,7 @@
   * Docker
   * Kubernetes
     * [k8s-1.27.2 二进制方式搭建](云原生/Kubernetes/k8s二进制部署.md)
-  * [在离线混部](yun-yuan-sheng/zai-li-xian-hun-bu/README.md)
+  * 在离线混部
     * [在离线混部方案](云原生/在离线混部/在离线混部整体方案.md)
 * 大数据
   * hadoop
