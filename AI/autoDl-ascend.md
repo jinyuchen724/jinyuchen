@@ -1,4 +1,4 @@
-## Qwen3-8B在华为昇腾平台上的微调与推理实践
+## Qwen3在华为昇腾平台上的微调与推理实践
 
 ### autoDl实践
 找到一个比较适合学习实践AI的网站，CodeWithGPU，社区里有很多适合学习的镜像，因为我们现在大量业务场景都基于
@@ -207,36 +207,183 @@ xx.myhuaweicloud.com/ascendhub/cann  8.3.rc1-910b-ubuntu22.04-py3.11    c1855ae3
 ```
 启动镜像:
 ```shell
-docker run --ipc=host --network=host --privileged=true --device=/dev/davinci0 
---device=/dev/davinci1 --device=/dev/davinci2 
---device=/dev/davinci3 --device=/dev/davinci4 --device=/dev/davinci5 --device=/dev/davinci6 --device=/dev/davinci7 --device=/dev/davinci_manager --device=/dev/devmm_svm         
---device=/dev/hisi_hdc -v /usr/local/sbin/:/usr/local/sbin/ -v /var/log/npu/slog/:/var/log/npu/slog -v /var/log/npu/profiling/:/var/log/npu/profiling
--v /var/log/npu/dump/:/var/log/npu/dump -v /var/log/npu/:/usr/slog -v /etc/hccn.conf:/etc/hccn.conf -v /usr/local/bin/npu-smi:/usr/local/bin/npu-smi -v /usr/local/dcmi:/usr/local/dcmi -v /usr/local/Ascend/driver:/usr/local/Ascend/driver 
--v /etc/ascend_install.info:/etc/ascend_install.info -v /etc/vnpu.cfg:/etc/vnpu.cfg --shm-size="250g" -v /data/Qwen:/var/test -it d32643912139 /bin/bash
+docker run --ipc=host --network=host --privileged=true         --device=/dev/davinci0         --device=/dev/davinci1         --device=/dev/davinci2         --device=/dev/davinci3         --device=/dev/davinci4         --device=/dev/davinci5         --device=/dev/davinci6         --device=/dev/davinci7         --device=/dev/davinci_manager         --device=/dev/devmm_svm         --device=/dev/hisi_hdc         -v /usr/local/sbin/:/usr/local/sbin/         -v /var/log/npu/slog/:/var/log/npu/slog         -v /var/log/npu/profiling/:/var/log/npu/profiling         -v /var/log/npu/dump/:/var/log/npu/dump         -v /var/log/npu/:/usr/slog         -v /etc/hccn.conf:/etc/hccn.conf         -v /usr/local/bin/npu-smi:/usr/local/bin/npu-smi         -v /usr/local/dcmi:/usr/local/dcmi         -v /usr/local/Ascend/driver:/usr/local/Ascend/driver         -v /etc/ascend_install.info:/etc/ascend_install.info         -v /etc/vnpu.cfg:/etc/vnpu.cfg         --shm-size="250g" -v /data/ai/zhengzeming/Qwen:/var/test -it d32643912139 /bin/bash
 ```
 
 安装依赖环境
 ```shell
 pip3 install torch-2.8.0+cpu-cp311-cp311-manylinux_2_28_aarch64.whl -i https://mirrors.aliyun.com/pypi/simple/
 pip3 install torch_npu-2.8.0-cp311-cp311-manylinux_2_28_aarch64.whl -i https://mirrors.aliyun.com/pypi/simple/
-pip install uvicorn fastapi Image transformers accelerate -i https://mirrors.aliyun.com/pypi/simple/
-pip install torchvision==0.23.0 -i https://mirrors.aliyun.com/pypi/simple/
 ```
 
 安装LLama-Factory(过程中遇到需要版本依赖的问题，待详细整理)
 ```shell
 git clone https://gitee.com/Zanter/LLaMA-Factory.git
 cd LLaMA-Factory
-pip install -e ".[torch-npu,metrics]"
-pip install --upgrade pillow
+pip install -e ".[torch-npu,metrics]" -i https://mirrors.aliyun.com/pypi/simple/
+pip install --upgrade pillow -i https://mirrors.aliyun.com/pypi/simple/
 llamafactory-cli env
 llamafactory-cli chat --model_name_or_path /var/test/Qwen3-VL-8B-Instruct/
 ```
+
+```shell
+pip install uvicorn fastapi Image accelerate -i https://mirrors.aliyun.com/pypi/simple/
+pip install torchvision==0.23.0 -i https://mirrors.aliyun.com/pypi/simple/
+```
+
+```shell
+Traceback (most recent call last):
+  File "/usr/local/python3.11.13/bin/llamafactory-cli", line 7, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/var/test/package/LLaMA-Factory/src/llamafactory/cli.py", line 81, in main
+    run_chat()
+  File "/var/test/package/LLaMA-Factory/src/llamafactory/chat/chat_model.py", line 163, in run_chat
+    chat_model = ChatModel()
+                 ^^^^^^^^^^^
+  File "/var/test/package/LLaMA-Factory/src/llamafactory/chat/chat_model.py", line 52, in __init__
+    self.engine: "BaseEngine" = HuggingfaceEngine(model_args, data_args, finetuning_args, generating_args)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/test/package/LLaMA-Factory/src/llamafactory/chat/hf_engine.py", line 54, in __init__
+    tokenizer_module = load_tokenizer(model_args)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/test/package/LLaMA-Factory/src/llamafactory/model/loader.py", line 77, in load_tokenizer
+    config = load_config(model_args)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/test/package/LLaMA-Factory/src/llamafactory/model/loader.py", line 117, in load_config
+    return AutoConfig.from_pretrained(model_args.model_name_or_path, **init_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/python3.11.13/lib/python3.11/site-packages/transformers/models/auto/configuration_auto.py", line 1094, in from_pretrained
+    raise ValueError(
+ValueError: The checkpoint you are trying to load has model type `qwen3_vl` but Transformers does not recognize this architecture. This could be because of an issue with the checkpoint, or because your version of Transformers is out of date.
+
+pip install --upgrade transformers==4.57.1 -i https://mirrors.aliyun.com/pypi/simple/
+```
+
+```shell
+Traceback (most recent call last):
+  File "/usr/local/python3.11.13/bin/llamafactory-cli", line 3, in <module>
+    from llamafactory.cli import main
+  File "/var/test/package/LLaMA-Factory/src/llamafactory/cli.py", line 21, in <module>
+    from . import launcher
+  File "/var/test/package/LLaMA-Factory/src/llamafactory/launcher.py", line 15, in <module>
+    from llamafactory.train.tuner import run_exp  # use absolute import
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/test/package/LLaMA-Factory/src/llamafactory/train/tuner.py", line 27, in <module>
+    from ..hparams import get_infer_args, get_ray_args, get_train_args, read_args
+  File "/var/test/package/LLaMA-Factory/src/llamafactory/hparams/__init__.py", line 20, in <module>
+    from .parser import get_eval_args, get_infer_args, get_ray_args, get_train_args, read_args
+  File "/var/test/package/LLaMA-Factory/src/llamafactory/hparams/parser.py", line 46, in <module>
+    check_dependencies()
+  File "/var/test/package/LLaMA-Factory/src/llamafactory/extras/misc.py", line 97, in check_dependencies
+    check_version("transformers>=4.41.2,<=4.49.0,!=4.46.0,!=4.46.1,!=4.46.2,!=4.46.3,!=4.47.0,!=4.47.1,!=4.48.0")
+  File "/var/test/package/LLaMA-Factory/src/llamafactory/extras/misc.py", line 90, in check_version
+    require_version(requirement, hint)
+  File "/usr/local/python3.11.13/lib/python3.11/site-packages/transformers/utils/versions.py", line 111, in require_version
+    _compare_versions(op, got_ver, want_ver, requirement, pkg, hint)
+  File "/usr/local/python3.11.13/lib/python3.11/site-packages/transformers/utils/versions.py", line 44, in _compare_versions
+    raise ImportError(
+ImportError: transformers>=4.41.2,<=4.49.0,!=4.46.0,!=4.46.1,!=4.46.2,!=4.46.3,!=4.47.0,!=4.47.1,!=4.48.0 is required for a normal functioning of this module, but found transformers==4.57.3.
+To fix: run `pip install transformers>=4.41.2,<=4.49.0,!=4.46.0,!=4.46.1,!=4.46.2,!=4.46.3,!=4.47.0,!=4.47.1,!=4.48.0` or set `DISABLE_VERSION_CHECK=1` to skip this check.
+[ERROR] 2026-01-04-07:42:37 (PID:559, Device:-1, RankID:-1) ERR99999 UNKNOWN applicaiton exception
+
+需要升级LLaMA-Factory
+pip install llamafactory==0.9.4 --force-reinstall -i https://mirrors.aliyun.com/pypi/simple/
+pip install numba --upgrade -i https://pypi.tuna.tsinghua.edu.cn/simple
+```
+
+```shell
+Traceback (most recent call last):
+  File "/usr/local/python3.11.13/lib/python3.11/site-packages/torch_npu/__init__.py", line 41, in <module>
+    import torch_npu.npu
+  File "/usr/local/python3.11.13/lib/python3.11/site-packages/torch_npu/npu/__init__.py", line 138, in <module>
+    from torch_npu.utils import _should_print_warning
+  File "/usr/local/python3.11.13/lib/python3.11/site-packages/torch_npu/utils/__init__.py", line 4, in <module>
+    from torch_npu import _C
+ImportError: /usr/local/python3.11.13/lib/python3.11/site-packages/torch_npu/lib/libtorch_npu.so: undefined symbol: _ZNK3c1010TensorImpl20is_contiguous_customENS_12MemoryFormatE
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/python3.11.13/lib/python3.11/site-packages/torch/__init__.py", line 2833, in _import_device_backends
+    entrypoint = backend_extension.load()
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/python3.11.13/lib/python3.11/importlib/metadata/__init__.py", line 202, in load
+    module = import_module(match.group('module'))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/python3.11.13/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/usr/local/python3.11.13/lib/python3.11/site-packages/torch_npu/__init__.py", line 43, in <module>
+    from torch_npu.utils._error_code import ErrCode, pta_error
+  File "/usr/local/python3.11.13/lib/python3.11/site-packages/torch_npu/utils/__init__.py", line 4, in <module>
+    from torch_npu import _C
+ImportError: /usr/local/python3.11.13/lib/python3.11/site-packages/torch_npu/lib/libtorch_npu.so: undefined symbol: _ZNK3c1010TensorImpl20is_contiguous_customENS_12MemoryFormatE
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/python3.11.13/bin/llamafactory-cli", line 7, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/usr/local/python3.11.13/lib/python3.11/site-packages/llamafactory/cli.py", line 17, in main
+    from .extras.misc import is_env_enabled
+  File "/usr/local/python3.11.13/lib/python3.11/site-packages/llamafactory/extras/misc.py", line 23, in <module>
+    import torch
+  File "/usr/local/python3.11.13/lib/python3.11/site-packages/torch/__init__.py", line 2878, in <module>
+    _import_device_backends()
+  File "/usr/local/python3.11.13/lib/python3.11/site-packages/torch/__init__.py", line 2837, in _import_device_backends
+    raise RuntimeError(
+RuntimeError: Failed to load the backend extension: torch_npu. You can disable extension auto-loading with TORCH_DEVICE_BACKEND_AUTOLOAD=0.
+
+root@huawei-910b3-03-debug:/var/test/package/LLaMA-Factory# pip list |grep torch
+torch                  2.9.1
+torch_npu              2.8.0
+torchaudio             2.9.1
+torchdata              0.11.0
+torchvision            0.24.1
+
+#重新安装torch
+pip install cloudpickle ml-dtypes tornado --user -i https://pypi.tuna.tsinghua.edu.cn/simple
+pip3 install torch-2.8.0+cpu-cp311-cp311-manylinux_2_28_aarch64.whl -i https://mirrors.aliyun.com/pypi/simple/
+pip3 install torchaudio==2.8.0 -i https://mirrors.aliyun.com/pypi/simple/ 
+pip3 install torchvision==0.23.0 -i https://mirrors.aliyun.com/pypi/simple/ 
+pip3 install tokenizers==0.22.1 -i https://mirrors.aliyun.com/pypi/simple/ 
+```
+
 
 环境准备好后，进行下验证启动下模型:
 ```shell
 llamafactory-cli chat --model_name_or_path /var/test/Qwen3-VL-8B-Instruct/
 这里需要等待模型加载一段时间，可以进行对话即表示加载成功：
+[INFO|modeling_utils.py:2341] 2026-01-04 07:52:33,068 >> Instantiating Qwen3VLTextModel model under default dtype torch.bfloat16.
+Loading checkpoint shards: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:03<00:00,  1.01it/s]
+[INFO|configuration_utils.py:939] 2026-01-04 07:52:46,113 >> loading configuration file /var/test/Qwen3-VL-8B-Instruct/generation_config.json
+[INFO|configuration_utils.py:986] 2026-01-04 07:52:46,113 >> Generate config GenerationConfig {
+  "bos_token_id": 151643,
+  "do_sample": true,
+  "eos_token_id": [
+    151645,
+    151643
+  ],
+  "pad_token_id": 151643,
+  "temperature": 0.7,
+  "top_k": 20,
+  "top_p": 0.8
+}
+
+[WARNING|dynamic_module_utils.py:77] 2026-01-04 07:52:46,114 >> The module name  (originally ) is not a valid Python identifier. Please rename the original module to avoid import issues.
+[INFO|dynamic_module_utils.py:423] 2026-01-04 07:52:46,114 >> Could not locate the custom_generate/generate.py inside /var/test/Qwen3-VL-8B-Instruct/.
+[INFO|2026-01-04 07:52:46] llamafactory.model.model_utils.attention:143 >> Using torch SDPA for faster training and inference.
+[INFO|2026-01-04 07:52:46] llamafactory.model.loader:143 >> all params: 8,767,123,696
+Welcome to the CLI application, use `clear` to remove the history, use `exit` to exit the application.
+
 User: 请介绍下你自己
 Assistant: xxxxxx
 ```
@@ -311,9 +458,9 @@ cat dataset_info.json
 
 - 模型训练/微调
 ```shell
-我构建了大概3000条数据,使用了7张npu卡,训练了20轮,命令如下
+我构建了大概3000条数据,使用了4张npu卡,训练了20轮,命令如下
 
-export ASCEND_RT_VISIBLE_DEVICES=0,1,2,3,4,5,7
+export ASCEND_RT_VISIBLE_DEVICES=0,1,2,3
 cd LLaMA-Factory
 
 llamafactory-cli train \
