@@ -1,13 +1,13 @@
 # Table of contents
 
-* [操作系统]()
-  * [linux]()
-    * [cpu]()
+* [操作系统]
+  * [linux]
+    * [cpu]
       * [cpu总结](操作系统/linux/cpu/cpu总结.md)
-      * [问题排查]()
+      * [问题排查]
         * [容器中的业务cpu抖动](操作系统/linux/cpu/问题排查/容器中的业务cpu抖动.md)
-    * [memory]()
-      * [问题排查]()
+    * [memory]
+      * [问题排查]
         * [应用线程的内存问题—容器中的业务频繁fullgc](操作系统/linux/memory/问题排查/应用线程的内存问题—容器中的业务频繁fullgc.md)
         * [内存碎片问题—容器启动状态卡在ContainerCreating](操作系统/linux/memory/问题排查/内存碎片问题—容器启动状态卡在ContainerCreating.md)
         * [内存tmpfs问题—tmpfs占用太多内存导致服务oom](操作系统/linux/memory/问题排查/内存tmpfs问题—tmpfs占用太多内存导致服务oom.md)
@@ -22,11 +22,11 @@
       * [pid-namespace](操作系统/linux/namespace/pid-namespace.md)
       * [user-namespace](操作系统/linux/namespace/user-namespace.md)
       * [uts-namespace](操作系统/linux/namespace/uts-namespace.md)
-    * [cgroup]()
+    * [cgroup]
       * [cgroup概览](操作系统/linux/cgroup/cgroup.md)
       * [cgroup-cpu](操作系统/linux/cgroup/cgroup-cpu.md)
       * [cgroup-memory](操作系统/linux/cgroup/cgroup-memory.md)
-    * [rootfs]()
+    * [rootfs]
       * [rootfs](操作系统/linux/cgroup/rootfs.md)
     * network
       * 问题排查
@@ -35,19 +35,19 @@
         * [创建一台新的kvm机器后,为啥线上服务断断续续反复超时](操作系统/linux/network/问题排查/网络mac地址冲突—创建新机器后线上服务反复超时.md)
     * arm
       * [arm板子烧入镜像大小优化](操作系统/linux/arm/image.md)
-* [云原生]()
+* [云原生]
   * [Docker](yun-yuan-sheng/docker.md)
   * [Kubernetes](yun-yuan-sheng/kubernetes.md)
     * [k8s-1.27.2 二进制方式搭建](云原生/Kubernetes/k8s二进制部署.md)
   * [在离线混部](yun-yuan-sheng/zai-li-xian-hun-bu/README.md)
     * [在离线混部方案](云原生/在离线混部/在离线混部整体方案.md)
     * [Qwen3在华为昇腾平台上的微调与推理](../../AI/autoDl-ascend.md)
-* [大数据]()
-  * [hadoop]()
+* [大数据]
+  * [hadoop]
     * [yarn](大数据/hadoop/yarn.md)
       * [YarnApplicationMater启动流程分析](大数据/hadoop/yarn/YarnApplicationMater启动流程分析.md)
     * hdfs
       * [HDFS-EC实践](大数据/hadoop/hdfs/HDFS-EC实践.md)
-* [SRE]()
-* [AI]()
+* [SRE]
+* [AI]
   * [Qwen3在华为昇腾平台上的微调与推理](AI/autoDl-ascend.md)
