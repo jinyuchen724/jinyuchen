@@ -12,7 +12,7 @@
         * [内存碎片问题—容器启动状态卡在ContainerCreating](操作系统/linux/memory/问题排查/内存碎片问题—容器启动状态卡在ContainerCreating.md)
         * [内存tmpfs问题—tmpfs占用太多内存导致服务oom](操作系统/linux/memory/问题排查/内存tmpfs问题—tmpfs占用太多内存导致服务oom.md)
       * [memory总结](操作系统/linux/memory/memory总结.md)
-      * [内存分析工具](操作系统/linux/memory/内存分析工具.md)
+      * [内存分析工具](操作系统/linux/memory/内存分析工具/内存分析工具.md)
       * 内存管理详解
         * [深入理解cache](操作系统/linux/memory/内存管理详解/深入理解cache.md)
     * namespace
@@ -36,15 +36,14 @@
     * arm
       * [arm板子烧入镜像大小优化](操作系统/linux/arm/image.md)
 * 云原生
-  * [Docker](yun-yuan-sheng/docker.md)
-  * [Kubernetes](yun-yuan-sheng/kubernetes.md)
+  * Docker
+  * Kubernetes
     * [k8s-1.27.2 二进制方式搭建](云原生/Kubernetes/k8s二进制部署.md)
   * [在离线混部](yun-yuan-sheng/zai-li-xian-hun-bu/README.md)
     * [在离线混部方案](云原生/在离线混部/在离线混部整体方案.md)
-    * [Qwen3在华为昇腾平台上的微调与推理](../../AI/autoDl-ascend.md)
 * 大数据
   * hadoop
-    * [yarn](大数据/hadoop/yarn.md)
+    * yarn
       * [YarnApplicationMater启动流程分析](大数据/hadoop/yarn/YarnApplicationMater启动流程分析.md)
     * hdfs
       * [HDFS-EC实践](大数据/hadoop/hdfs/HDFS-EC实践.md)
