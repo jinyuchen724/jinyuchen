@@ -50,3 +50,4 @@
 * SRE
 * AI
   * [Qwen3在华为昇腾平台上的微调与推理](AI/autoDl-ascend.md)
+  * [Qwen3-VL-8B模型使用msModelSlim量化实践](AI/ascend-310p下模型量化.md)
