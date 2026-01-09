@@ -495,3 +495,36 @@ llamafactory-cli train \
 	--plot_loss \
 	--bf16
 ```
+
+- 模型微调结果
+
+training_loss
+
+![training_loss](./images/training_loss.png)
+
+training_eval_loss
+
+![training_eval_loss](./images/training_eval_loss.png)
+
+微调前显示找不到文档:
+
+![微调前](./images/5.png)
+
+启动微调后的模型权重
+
+```shell
+root@liteserver-4e37:/var/test/package/LLaMA-Factory/data# llamafactory-cli chat --model_name_or_path /var/test/Qwen3-VL-8B-Instruct/ --adapter_name_or_path=/var/test/package/train_v2/ --template qwen3_vl --finetuning_type lora
+```
+
+微调后显示了文档地址,当然这个效果看起来比较烂。。。后续在研究一下怎么去变得准确
+
+![微调后](./images/6.png)
+
+AI给的建议：
+```shell
+训练数据太少 / 太单一，模型学的是 “数据的细节” 而非 “通用规律”；
+模型结构太复杂，把训练数据里的噪声也当成了规律去学习；
+验证集和训练集数据分布太接近，没体现真实场景的多样性。
+```
+
+
