@@ -55,7 +55,7 @@ pip install torchvision==0.23.0 -i https://mirrors.aliyun.com/pypi/simple/
 ```shell
 cd msmodelslim/example/multimodal_vlm/Qwen3-VL
 #train_images_64根据id选取了64张图片
-[root@huawei-310p-iduo4-03 Qwen3-VL]# python quant_qwen3vl.py --model_path /var/test/Qwen3-VL-8B-Instruct_64/ --calib_images /var/test/train_images/ --save_directory /var/test/Qwen3-VL-8B-Instruct-W8A8/ --w_bit 8 --a_bit 8 --device_type cpu --trust_remote_code True
+[root@huawei-310p-iduo4-03 Qwen3-VL]# python quant_qwen3vl.py --model_path /var/test/Qwen3-VL-8B-Instruct/ --calib_images /var/test/train_images_64/ --save_directory /var/test/Qwen3-VL-8B-Instruct-W8A8/ --w_bit 8 --a_bit 8 --device_type cpu --trust_remote_code True
 
 ```
 

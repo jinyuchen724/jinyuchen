@@ -99,7 +99,7 @@ llamafactory-cli webchat \
 root@autodl-container-6ce943a632-ed7347c0:~# cat 4-8B-合并-微调后.sh
 llamafactory-cli export merge.yaml
 
-root@autodl-container-6ce943a632-ed7347c0:~# cat cat merge.yaml
+root@autodl-container-6ce943a632-ed7347c0:~# cat merge.yaml
 ### model
 model_name_or_path: /root/Qwen3-8B                # 原始Qwen3-8B模型路径
 adapter_name_or_path: /root/autodl-tmp/Lora-LLM/saves/Qwen3-8B/lora/sft/   # 微调后的LoRA权重路径
@@ -111,7 +111,8 @@ export_dir: /root/autodl-tmp/Qwen3-8B-New                # 合并后的模型输
 export_size: 4                                   # 分片大小（单位：GB）
 export_device: cuda:0                            # 使用第一张4090D显卡加速合并（可选cuda:1）
 export_legacy_format: false                      # 新格式（支持分片加载）
-5-8B推理-命令行.sh
+
+root@autodl-container-6ce943a632-ed7347c0:~# 5-8B推理-命令行.sh
 llamafactory-cli chat \
     --model_name_or_path /root/autodl-tmp/Qwen3-8B-New/ \
     --template qwen3 \
@@ -527,4 +528,25 @@ AI给的建议：
 验证集和训练集数据分布太接近，没体现真实场景的多样性。
 ```
 
+- 模型合并
 
+```shell
+root@liteserver-4e37:/var/test/package# cat merge.yaml
+### model
+model_name_or_path: /var/test/Qwen3-VL-8B-Instruct/
+adapter_name_or_path: /var/test/package/train_v2/
+template: qwen3_vl
+finetuning_type: lora
+
+### export
+export_dir: /var/test/Qwen3-VL-8B-Instruct-new/
+export_size: 4
+export_device: npu:1
+export_legacy_format: false
+```
+
+```shell
+root@liteserver-4e37:/var/test/package# llamafactory-cli export merge.yaml
+```
+
+![合并后效果](./images/7.png)
