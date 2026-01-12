@@ -59,5 +59,151 @@ cd msmodelslim/example/multimodal_vlm/Qwen3-VL
 
 ```
 
+```shell
+#cat convert_weights.py
+#!/usr/bin/python
+#****************************************************************#
+# ScriptName: convert_weights.py
+# Create Date: 2026-01-12 10:40
+# Modify Date: 2026-01-12 10:40
+#***************************************************************#
+
+import argparse
+import json
+import os
+import shutil
+import numpy as np
+import mindspore as ms
+from pathlib import Path
+
+parser = argparse.ArgumentParser(description="Post-process quantized Qwen3-VL model weights and prepare for inference.")
+parser.add_argument("--original_dir", type=str,required=True)
+parser.add_argument("--quant_dir", type=str, required=True)
+parser.add_argument("--target_type", type=str, required=True)
+args = parser.parse_args()
+
+original_dir = args.original_dir
+quant_dir = args.quant_dir
+target_type = args.target_type
+
+quant_path = Path(quant_dir)
+original_path = Path(original_dir)
+model_path = quant_dir + "quant_model_weight_w8a8.safetensors"
+
+for item in original_path.iterdir():
+    if item.is_file() and item.suffix != ".safetensors":
+        dst = quant_path / item.name
+        if not dst.exists():
+            shutil.copy2(item, dst)
+
+weight_files = list(quant_path.glob("*.safetensors"))
+if not weight_files:
+    raise FileNotFoundError("量化目录中未找到任何 .safetensors 文件！")
+elif len(weight_files) == 1:
+    weight_file = weight_files[0]
+    if weight_file.name != "quant_model_weight_w8a8.safetensors":
+        weight_file.rename(quant_path / "quant_model_weight_w8a8.safetensors")
+
+old_desc = quant_path / "quant_model_description_w8a8.json"
+new_desc = quant_path / "quant_model_description.json"
+
+if old_desc.exists():
+    old_desc.rename(new_desc)
+
+with open(new_desc, "r") as f:
+    quant_config = json.load(f)
+
+param_names = [k for k in quant_config.keys() if k != "model_quant_type"]
+
+total_size = (quant_path / "quant_model_weight_w8a8.safetensors").stat().st_size
+index_data = {
+    "metadata": {"total_size": total_size},
+    "weight_map": {name: "quant_model_weight_w8a8.safetensors" for name in param_names}
+}
+
+index_path = quant_path / "model.safetensors.index.json"
+with open(index_path, "w") as f:
+    json.dump(index_data, f, indent=2)
+
+params = ms.load_checkpoint(model_path, format='safetensors')
+new_params = {}
+
+for key, value in params.items():
+    if "input_scale" in key or "input_offset" in key:
+        weight_key = key.replace("input_scale", "weight")
+        weight_key = weight_key.replace("input_offset", "weight")
+        weight_key = weight_key.replace("k_proj", "q_proj")
+        weight_key = weight_key.replace("v_proj", "q_proj")
+        weight_value_shape = params[weight_key].shape[1]
+        if "input_scale" in key:
+            dtype = ms.float16
+        elif target_type == "310":
+            dtype = ms.float16
+        elif target_type == "910":
+            dtype = ms.bfloat16
+        value = ms.Parameter(ms.ops.full((weight_value_shape,), value, dtype=dtype))
+    elif "deq_scale" in key and target_type == "310":
+        value = ms.Parameter(ms.Tensor(value.asnumpy().astype(np.int32).view(np.float32)))
+    new_params[key] = value
+
+ms.save_checkpoint(new_params, model_path, format="safetensors")
+```
+
+- 权重转换
+msmodelslim量化出的权重目录会缺少相应的json文件，并且权重也需要进行转换才可以进行推理，运行脚本需要提供原始权重路径 original_dir 量化权重的路径 quant_dir 和服务器的类型 target_type 选择 910 或 310：
+```shell
+python convert_weights.py --original_dir /var/test/Qwen3-VL-8B-Instruct/ --quant_dir /var/test/Qwen3-VL-8B-Instruct-W8A8/ --target_type 310 # 脚本见附录
+
+ll -l -h
+total 12G
+-rw------- 1 root root  15K Jan 11 13:22 a.py
+-rw------- 1 root root 5.4K Jan 11 13:22 chat_template.json
+-rw------- 1 root root 1.8K Jan 11 13:22 config.json
+-rw-r--r-- 1 root root 1.5K Dec 30 11:34 config.json.bak
+-rw------- 1 root root  269 Jan 11 13:22 generation_config.json
+-rw-r--r-- 1 root root 1.6M Dec 23 17:17 merges.txt
+-rw-r--r-- 1 root root 201K Jan 12 10:49 model.safetensors.index.json 
+drwxr-xr-x 4 root root   52 Jan 12 11:37 outputs
+-rw------- 1 root root  390 Jan 11 13:22 preprocessor_config.json
+-rw------- 1 root root 136K Jan 11 13:22 quant_model_description.json
+-r-------- 1 root root  12G Jan 12 10:50 quant_model_weight_w8a8.safetensors    #量化后合并生成的模型权重
+-rw-r--r-- 1 root root 7.0K Dec 23 17:17 README.md
+-rw------- 1 root root  11K Jan 11 13:22 tokenizer_config.json
+-rw------- 1 root root 6.8M Jan 11 13:22 tokenizer.json
+-rw------- 1 root root  385 Jan 11 13:22 video_preprocessor_config.json
+-rw------- 1 root root 2.7M Jan 11 13:22 vocab.json
+```
+
+- 效果
+
+```shell
+使用vllm-spore启动:
+
+export ASCEND_RT_VISIBLE_DEVICES=7
+export VLLM_MS_MODEL_BACKEND=Native
+export LCCL_DETERMINISTIC=1
+export HCCL_DETERMINISTIC=true
+export ATB_MATMUL_SHUFFLE_K_ENABLE=0
+export ATB_LLM_LCOC_ENABLE=0
+
+vllm-mindspore serve \
+	--port 8003 \
+	/var/test/lianghua/Qwen3-VL-8B-Instruct-W8A8/ \
+	--gpu-memory-utilization=0.85 \
+	--max_model_len 4096 \
+	--max_num_seqs 64 \
+	--max_num_batched_tokens 8192 \
+	--enable_prefix_caching
+```
+
+发现量化后乱码,输出的内容明显有问题：
+
+![量化前](./images/8.png)
+
+![量化后](./images/9.png)
+
+需要在vllm-spore启动参数添加--quantization golden-stick，添加后问题解决
+
+
 参考：
 - https://gitee.com/hz2901782080/vllm-mindspore_my/blob/my_boom/docs/boom1115/quantization.md
