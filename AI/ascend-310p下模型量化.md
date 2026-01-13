@@ -204,6 +204,17 @@ vllm-mindspore serve \
 
 需要在vllm-spore启动参数添加--quantization golden-stick，添加后问题解决
 
+另外这个量化版本是在310p上跑的，跑完我们进行了精度评分测试：
+
+Qwen3-VL-8B量化前：
+
+![量化前](./images/10.png)
+
+Qwen3-VL-8B量化后：
+
+![量化前](./images/11.png)
+
+**发现与未量化的精度相差6%以上，经过排查与确认，原因是310不支持bfloat16，量化采用的是float16。导致精度变差。用910重新量化后问题解决**
 
 参考：
 - https://gitee.com/hz2901782080/vllm-mindspore_my/blob/my_boom/docs/boom1115/quantization.md
